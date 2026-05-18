@@ -119,10 +119,10 @@ st.subheader('Annual Performance & Reliability')
 c1, c2, c3, c4 = st.columns(4)
 comp_pct = ((d_mins - v_count) / d_mins * 100) if d_mins > 0 else 100
 c1.metric('Ramp Compliance', f'{comp_pct:.2f}%')
-c2.metric('Violations', f'{v_count:,}')
+c2.metric('Violations', f'{v_count:,} minutes')
 c3.metric('Annual BESS Throughput', f'{np.sum(np.abs(bess))/60:,.0f} MWh')
 efc = (np.sum(np.abs(bess))/60) / (2 * enr_cap * (soc_max - soc_min))
-c4.metric('Annual EFC', f'{efc:.1f}')
+c4.metric('Annual EFC', f'{efc:.1f} cycles')
 
 st.subheader('Annual Energy Budget (100 MW POC Export Limit)')
 e1, e2, e3, e4 = st.columns(4)
