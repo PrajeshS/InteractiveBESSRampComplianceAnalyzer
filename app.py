@@ -119,7 +119,7 @@ c8.metric('Curtailment Ratio', f'{(a_curtail/a_solar*100):.1f}%')
 
 st.markdown('<div class="section-header">Daily Energy Budget (Selected Event Day)</div>', unsafe_allow_html=True)
 d1, d2, d3, d4 = st.columns(4)
-d1.metric('Daily Solar', f"{d_stats['solar']:.1f} MWh")
+d1.metric('Daily Solar Generation', f"{d_stats['solar']:.1f} MWh")
 d2.metric('Daily Export', f"{d_stats['export']:.1f} MWh")
 d3.metric('Daily Curtailment', f"{d_stats['curtail']:.1f} MWh")
 d4.metric('Daily BESS Throughput', f"{d_stats['bess']:.1f} MWh")
