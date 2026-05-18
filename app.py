@@ -14,7 +14,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-header">Interactive BESS Ramp Compliance Analyzer</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">Interactive BESS Ramp Compliance Analyzer (RTE η=0.92)</div>', unsafe_allow_html=True)
 
 st.sidebar.header('Simulation Parameters')
 pwr_cap = st.sidebar.number_input('BESS Power (MW)', 0, 200, 50, step=1)
