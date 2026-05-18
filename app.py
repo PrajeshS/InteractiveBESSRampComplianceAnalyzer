@@ -42,7 +42,7 @@ if selected_day == 156:
 elif selected_day == 56:
     st.sidebar.markdown('<div class="caption">Note: Single largest 1-minute solar power jump (97 MW/min).</div>', unsafe_allow_html=True)
 elif selected_day == 331:
-    st.sidebar.markdown('<div class="caption">Note: Maximum daily energy throughput (charge/discharge cycle).</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="caption">Note: Maximum peak-to-peak depth of discharge (22.68% SOC Swing).</div>', unsafe_allow_html=True)
 
 # --- Simulation Engine ---
 @st.cache_data
