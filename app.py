@@ -96,13 +96,13 @@ c5, c6, c7, c8 = st.columns(4)
 c5.metric('Solar Generated', f'{a_solar:,.0f} MWh')
 c6.metric('Grid Export', f'{a_export:,.0f} MWh')
 c7.metric('Total Curtailment', f'{a_curtail:,.0f} MWh')
-c8.metric('Curtailed Ratio', f'{(a_curtail/a_solar*100):.1f} %')
+c8.metric('Curtailment', f'{(a_curtail/a_solar*100):.1f} %')
 
 st.markdown('<div class="section-header">Daily Energy Budget (Selected Event Day)</div>', unsafe_allow_html=True)
 c9, c10, c11, c12 = st.columns(4)
-c9.metric('Daily Solar', f"{d_stats['solar']:.1f} MWh")
-c10.metric('Daily Export', f"{d_stats['export']:.1f} MWh")
-c11.metric('Daily Curtail', f"{d_stats['curtail']:.1f} MWh")
+c9.metric('Solar Generated', f"{d_stats['solar']:.1f} MWh")
+c10.metric('Grid Export', f"{d_stats['export']:.1f} MWh")
+c11.metric('Curtailment', f"{d_stats['curtail']:.1f} MWh")
 c12.metric('Daily BESS Dispatch', f"{d_stats['bess']:.1f} MWh")
 
 s, e = selected_day * 1440, (selected_day + 1) * 1440
