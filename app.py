@@ -129,7 +129,7 @@ e1, e2, e3, e4 = st.columns(4)
 e1.metric('Total Solar', f'{a_solar:,.0f} MWh')
 e2.metric('Grid Export', f'{a_export:,.0f} MWh')
 e3.metric('Curtailment', f'{a_curtail:,.0f} MWh')
-e4.metric('Curtailed %', f'{(a_curtail/a_solar*100):.1f}%')
+e4.metric('Curtailed', f'{(a_curtail/a_solar*100):.1f}%')
 
 st.subheader('Daily Energy Budget (Selected Day)')
 d1, d2, d3, d4 = st.columns(4)
