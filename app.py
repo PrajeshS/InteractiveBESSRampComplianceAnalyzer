@@ -16,7 +16,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-header">Interactive BESS Ramp Compliance Analyzer</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">Interactive BESS Ramp Compliance Analyzer (RTE η=0.92)</div>', unsafe_allow_html=True)
 
 # --- Sidebar Controls ---
 st.sidebar.header('⚙️ System Configuration')
@@ -41,9 +41,9 @@ selected_day_label = st.sidebar.selectbox('Select Critical Event Day', list(day_
 selected_day = day_options[selected_day_label]
 
 descs = {
-    'Worst Ramp Stress (06-06)': "**June 6th (Day 157)**: This day represents the absolute peak of the 'Ramp Stress Index'. High-frequency cloud cover creates constant minute-by-minute volatility, forcing the BESS to cycle rapidly to maintain the 3MW/min limit.",
-    'Highest Variability (02-26)': "**Feb 26th (Day 57)**: Features the highest single-minute solar drop recorded (**97.09 MW/min**). This is a critical test of BESS Power (MW) response time and instantaneous discharge capability.",
-    'Largest SOC Swing (11-28)': "**Nov 28th (Day 332)**: The day with the largest cumulative energy throughput. It tests the Energy Capacity (MWh) limits by forcing the battery through its deepest single-day charge/discharge cycle."
+    'Worst Ramp Stress (06-06)': "June 6th (Day 157): This day represents the absolute peak of the 'Ramp Stress Index'. High-frequency cloud cover creates constant minute-by-minute volatility, forcing the BESS to cycle rapidly to maintain the 3MW/min limit.",
+    'Highest Variability (02-26)': "Feb 26th (Day 57): Features the highest single-minute solar drop recorded (**97.09 MW/min**). This is a critical test of BESS Power (MW) response time and instantaneous discharge capability.",
+    'Largest SOC Swing (11-28)': "Nov 28th (Day 332): The day with the largest cumulative energy throughput. It tests the Energy Capacity (MWh) limits by forcing the battery through its deepest single-day charge/discharge cycle."
 }
 st.sidebar.markdown(f'<div class="event-desc">{descs[selected_day_label]}</div>', unsafe_allow_html=True)
 
@@ -107,12 +107,12 @@ st.markdown('<div class="section-header">Performance & Reliability KPIs</div>', 
 c1, c2, c3, c4 = st.columns(4)
 c1.metric('Ramp Compliance', f'{(d_mins - v_count) / d_mins * 100:.2f}%' if d_mins > 0 else '100%')
 c2.metric('Violations Remaining', f'{v_count:,} mins')
-c3.metric('Annual BESS Effort', f'{a_bess:,.0f} MWh')
-c4.metric('Annual Cycle Count', f'{a_bess / (2 * enr_cap * (soc_max - soc_min)):.1f} cycles')
+c3.metric('Annual BESS Throughput', f'{a_bess:,.0f} MWh')
+c4.metric('Annual Full Equivalent Cycle Count', f'{a_bess / (2 * enr_cap * (soc_max - soc_min)):.1f} cycles')
 
 st.markdown('<div class="section-header">Annual Energy Budget (100 MW POC)</div>', unsafe_allow_html=True)
 c5, c6, c7, c8 = st.columns(4)
-c5.metric('Total Solar Gen', f'{a_solar:,.0f} MWh')
+c5.metric('Total Solar Generation', f'{a_solar:,.0f} MWh')
 c6.metric('Grid Exported', f'{a_export:,.0f} MWh')
 c7.metric('Inherent Curtailment', f'{a_curtail:,.0f} MWh')
 c8.metric('Curtailment Ratio', f'{(a_curtail/a_solar*100):.1f}%')
@@ -121,8 +121,8 @@ st.markdown('<div class="section-header">Daily Energy Budget (Selected Event Day
 d1, d2, d3, d4 = st.columns(4)
 d1.metric('Daily Solar', f"{d_stats['solar']:.1f} MWh")
 d2.metric('Daily Export', f"{d_stats['export']:.1f} MWh")
-d3.metric('Daily Curtail', f"{d_stats['curtail']:.1f} MWh")
-d4.metric('Daily BESS Dispatch', f"{d_stats['bess']:.1f} MWh")
+d3.metric('Daily Curtailment', f"{d_stats['curtail']:.1f} MWh")
+d4.metric('Daily BESS Throughput', f"{d_stats['bess']:.1f} MWh")
 
 # --- Main Plot ---
 st.markdown('<div class="section-header">Engineering Detail: Minute-by-Minute Dispatch</div>', unsafe_allow_html=True)
