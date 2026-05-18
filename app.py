@@ -136,7 +136,7 @@ d1, d2, d3, d4 = st.columns(4)
 d1.metric('Daily Solar', f"{d_stats['solar']:.1f} MWh")
 d2.metric('Daily Export', f"{d_stats['export']:.1f} MWh")
 d3.metric('Daily Curtailment', f"{d_stats['curtail']:.1f} MWh")
-d4.metric('Daily Throughput', f"{d_stats['throughput']:.1f} MWh")
+d4.metric('Daily BESS Throughput', f"{d_stats['throughput']:.1f} MWh")
 
 s, e = selected_day * 1440, (selected_day + 1) * 1440
 fig = go.Figure()
