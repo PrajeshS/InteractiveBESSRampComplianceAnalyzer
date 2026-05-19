@@ -42,6 +42,16 @@ day_options = {
 selected_label = st.sidebar.selectbox('Select View Day', list(day_options.keys()))
 selected_day = day_options[selected_label]
 
+# Event Day Notes
+event_notes = {
+    156: "<b>Worst Ramp Stress:</b> Highest cumulative volatility. Tests BESS switching frequency.",
+    56: "<b>Highest Variability:</b> Contains highest production drop  (97 MW). Tests Power (MW) response.",
+    331: "<b>Largest SOC Swing:</b> Deepest daily energy cycle. Tests Energy (MWh) capacity.",
+    75: "<b>Highest Solar Generation:</b> Highest solar generation (1072.5 MWh). Verifies behavior during high-output periods.",
+    346: "<b>Lowest Solar Generation:</b> Lowest solar geneation (74.5 MWh). Verifies behavior during low-output periods."
+}
+st.sidebar.markdown(f'<div class="event-note">{event_notes[selected_day]}</div>', unsafe_allow_html=True)
+
 @st.cache_data
 def load_data():
     csv_path = "power time series 1 min (1)(in).csv"
