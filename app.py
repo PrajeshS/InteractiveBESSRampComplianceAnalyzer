@@ -44,7 +44,7 @@ selected_day = day_options[selected_label]
 
 # Event Explanations (Engineering Context)
 event_notes = {
-    'Worst Ramp Stress (06-06)': "Tests cumulative BESS effort; contains the highest frequency of small/medium ramps requiring constant response.",
+    'Worst Ramp Stress (06-06)': "Tests cumulative BESS effort; contains the highest frequency of ramps requiring constant response.",
     'Highest Variability (02-26)': "Tests Power Capacity (MW); features a 97 MW/min drop due to extreme cloud cover.",
     'Largest SOC Swing (11-28)': "Tests Energy Capacity (MWh); requires the deepest sustained discharge cycle of the year.",
     'Highest Solar Generation (03-17)': "Tests 'Inherent Curtailment' risk when the 100 MW POC limit is frequently exceeded.",
@@ -125,17 +125,17 @@ c4.metric('Annual EFC', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
 
 st.markdown('<div class="section-header">Annual Energy Totals</div>', unsafe_allow_html=True)
 c5, c6, c7, c8, c9 = st.columns(5)
-c5.metric('Solar Gen', f'{a_solar:,.0f} MWh')
+c5.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c6.metric('Grid Export', f'{a_export:,.0f} MWh')
-c7.metric('Inherent Curtail', f'{a_curt_inh:,.0f} MWh')
-c8.metric('Ramp Curtail', f'{a_curt_ramp:,.0f} MWh')
-c9.metric('Total Curtail %', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
+c7.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
+c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
+c9.metric('Total Curtailment %', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
 
 st.markdown('<div class="section-header">Daily Energy Budget (Selected Day)</div>', unsafe_allow_html=True)
 d1, d2, d3, d4 = st.columns(4)
 d1.metric('Daily Solar', f'{ds:,.1f} MWh')
 d2.metric('Daily Export', f'{de:,.1f} MWh')
-d3.metric('Daily Curtail', f'{dc:,.1f} MWh')
+d3.metric('Daily Curtailment', f'{dc:,.1f} MWh')
 d4.metric('Daily BESS', f'{db:,.1f} MWh')
 
 s, e = selected_day * 1440, (selected_day + 1) * 1440
