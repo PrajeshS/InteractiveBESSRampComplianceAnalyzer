@@ -108,17 +108,17 @@ export, bess, soc, v_count, d_mins, a_solar, a_export, a_curtail, a_bess_mwh, ds
 
 # --- UI Display ---
 c1, c2, c3, c4 = st.columns(4)
-c1.metric('Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
+c1.metric('Annual Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} minutes')
-c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
+c3.metric('Annual Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
 
-st.markdown('<div class="section-header">Annual Energy Totals</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c5, c6, c7, c8 = st.columns(4)
 c5.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c6.metric('Grid Exported', f'{a_export:,.0f} MWh')
 c7.metric('Inherent Curtailment', f'{a_curtail:,.0f} MWh')
-c8.metric('Curtailment %', f'{(a_curtail/a_solar*100):.1f}%')
+c8.metric('Inherent Curtailment %', f'{(a_curtail/a_solar*100):.1f}%')
 
 st.markdown(f'<div class="section-header">Daily Energy Budget: {selected_label}</div>', unsafe_allow_html=True)
 d1, d2, d3, d4 = st.columns(4)
