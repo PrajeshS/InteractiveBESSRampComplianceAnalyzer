@@ -135,8 +135,8 @@ st.markdown('<div class="section-header">Daily Energy Budget (Selected Day)</div
 d1, d2, d3, d4 = st.columns(4)
 d1.metric('Daily Solar', f'{ds:,.1f} MWh')
 d2.metric('Daily Export', f'{de:,.1f} MWh')
-d3.metric('Daily Curtailment', f'{dc:,.1f} MWh')
-d4.metric('Daily BESS', f'{db:,.1f} MWh')
+d3.metric('Inherent Curtailment', f'{dc:,.1f} MWh')
+d4.metric('Daily BESS Effort', f'{db:,.1f} MWh')
 
 s, e = selected_day * 1440, (selected_day + 1) * 1440
 times = [f"{h:02d}:{m:02d}" for h in range(24) for m in range(60)]
