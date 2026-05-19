@@ -123,7 +123,7 @@ c2.metric('Annual Violations', f'{v_count:,} min')
 c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual EFC', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
 
-st.markdown('<div class="section-header">Annual Energy Totals</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c5, c6, c7, c8, c9 = st.columns(5)
 c5.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c6.metric('Grid Export', f'{a_export:,.0f} MWh')
