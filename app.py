@@ -45,7 +45,7 @@ selected_day = day_options[selected_label]
 # Event Explanations (Engineering Context)
 event_notes = {
     'Worst Ramp Stress (06-06)': "Tests cumulative BESS effort; contains the highest frequency of ramps requiring constant response.",
-    'Highest Variability (02-26)': "Tests Power Capacity (MW); features a 97 MW/min drop due to extreme cloud cover.",
+    'Highest Variability (02-26)': "Tests Power Capacity (MW); features a 65.86 MW/min drop and 111.26 MW/min gain.",
     'Largest SOC Swing (11-28)': "Tests Energy Capacity (MWh); requires the deepest sustained discharge cycle of the year.",
     'Highest Solar Generation (03-17)': "Tests 'Inherent Curtailment' risk when the 100 MW POC limit is frequently exceeded.",
     'Lowest Solar Generation (12-13)': "Baseline monitoring; minimal BESS intervention required."
