@@ -12,7 +12,7 @@ st.markdown("""
     [data-testid='stMetricValue'] { font-size: 1.8rem; color: #58a6ff; }
     .main-header { font-size: 28px; font-weight: bold; color: #58a6ff; margin-bottom: 20px; }
     .section-header { font-size: 14px; font-weight: bold; color: #8b949e; text-transform: uppercase; margin-top: 30px; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
-    .event-note { font-size: 0.85rem; color: #8b949e; margin-top: 10px; font-style: italic; line-height: 1.4; }
+    .event-note { font-size: 1.0rem; color: #8b949e; margin-top: 10px; font-style: italic; line-height: 1.4; }
     .stNumberInput div[data-baseweb='input'] { background-color: #0d1117; }
     </style>
     """, unsafe_allow_html=True)
