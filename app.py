@@ -44,11 +44,11 @@ selected_day = day_options[selected_label]
 
 # Event Explanations (Engineering Context)
 event_notes = {
-    'Worst Ramp Stress (06-06)': "Tests cumulative BESS effort; contains the highest frequency of ramps requiring constant response.",
-    'Highest Variability (02-26)': "Tests Power Capacity (MW); features a 65.86 MW/min drop and 111.26 MW/min gain.",
-    'Largest SOC Swing (11-28)': "Tests Energy Capacity (MWh); requires the deepest sustained discharge cycle of the year.",
-    'Highest Solar Generation (03-17)': "Tests 'Inherent Curtailment' risk when the 100 MW POC limit is frequently exceeded.",
-    'Lowest Solar Generation (12-13)': "Baseline monitoring; minimal BESS intervention required."
+    'Worst Ramp Stress (06-06)': "Most demanding ramp-compliance day of the year. Features continuous high-frequency solar fluctuations caused by rapidly changing cloud conditions, forcing the BESS to respond almost continuously to maintain export ramp limits. Primarily stresses cumulative battery utilization and overall ramp-control capability..",
+    'Highest Variability (02-26)': "Contains the largest short-duration solar power fluctuation observed in the dataset (65.86 MW/min drop and 111.26 MW/min gain), including extreme MW/min ramps caused by dense transient cloud cover. Primarily stresses instantaneous BESS power capability (MW), fast-response performance, and short-term ramp absorption requirements.",
+    'Largest SOC Swing (11-28)': "Produces the deepest sustained battery charge-discharge cycle of the year due to prolonged asymmetric solar variability. Primarily stresses usable energy capacity (MWh), SOC management strategy, and the BESS ability to maintain compliance during extended ramp events without energy depletion.",
+    'Highest Solar Generation (03-17)': "Represents the highest overall solar production day of the year, with extended periods operating near or above the 100 MW export limit. Primarily stresses inherent clipping behavior and the interaction between export limiting and ramp-control operation.",
+    'Lowest Solar Generation (12-13)': "Low-irradiance baseline operating day with minimal solar variability and limited BESS intervention. Useful for benchmarking idle system behavior, verifying low-stress operational stability, and comparing controller response under near-steady-state conditions."
 }
 if selected_label in event_notes:
     st.sidebar.markdown(f'<div class="event-note">💡 <b>Note:</b> {event_notes[selected_label]}</div>', unsafe_allow_html=True)
