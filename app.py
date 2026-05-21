@@ -121,7 +121,7 @@ c1, c2, c3, c4 = st.columns(4)
 c1.metric('Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} minutes')
 c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
-c4.metric('Annual EFC', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
+c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c5, c6, c7, c8, c9 = st.columns(5)
