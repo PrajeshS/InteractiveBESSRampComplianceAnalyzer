@@ -22,11 +22,11 @@ st.markdown('<div class="main-header">BESS Ramp Compliance Simulator</div>', uns
 # --- Sidebar Controls ---
 st.sidebar.header("⚙️ Physical Parameters")
 pwr_cap = st.sidebar.number_input('BESS Power Limit (MW)', 0, 200, 50)
-enr_cap = st.sidebar.number_input('BESS Energy Capacity (MWh)', 1, 400, 100)
+enr_cap = st.sidebar.number_input('BESS Energy Capacity (MWh)', 0, 400, 100)
 init_soc_pct = st.sidebar.number_input('Initial Year SOC (%)', 0, 100, 50)
-eff_one_way = st.sidebar.number_input('One-Way Efficiency', 0.80, 1.00, 0.95, step=0.01)
+eff_one_way = st.sidebar.number_input('One-Way Efficiency', 0.80, 1.00, 0.96, step=0.01)
 
-soc_choice = st.sidebar.selectbox('Operating SOC Window', ['30% - 70%', '20% - 80%', '10% - 90%'])
+soc_choice = st.sidebar.selectbox('Operating SOC Window', ['10% - 90%', '20% - 80%', '30% - 70%'])
 soc_min, soc_max = [float(x.replace('%', '').strip())/100 for x in soc_choice.split('-')]
 ramp_thresh = st.sidebar.number_input('Compliance Threshold (MW/min)', 0.0, 10.0, 3.0)
 
