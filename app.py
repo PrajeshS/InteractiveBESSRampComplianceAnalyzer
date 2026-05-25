@@ -20,7 +20,7 @@ st.markdown("""
 st.markdown('<div class="main-header">BESS Ramp Compliance Simulator</div>', unsafe_allow_html=True)
 
 # --- Sidebar Controls ---
-st.sidebar.header("⚙️ Physical Parameters")
+st.sidebar.header("⚙️ Physical & Simulation Parameters")
 pwr_cap = st.sidebar.number_input('BESS Power Limit (MW)', 0, 200, 50)
 enr_cap = st.sidebar.number_input('BESS Energy Capacity (MWh)', 0, 400, 100)
 init_soc_pct = st.sidebar.number_input('Initial Year SOC (%)', 0, 100, 50)
