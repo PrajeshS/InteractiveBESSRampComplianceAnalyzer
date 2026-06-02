@@ -44,7 +44,7 @@ selected_day = day_options[selected_label]
 
 # Event Explanations (Engineering Context)
 event_notes = {
-    'Worst Ramp Stress (06-06)': "Most demanding ramp-compliance day of the year. Features continuous high-frequency solar fluctuations caused by rapidly changing cloud conditions, forcing the BESS to respond almost continuously to maintain export ramp limits. Primarily stresses cumulative battery utilization and overall ramp-control capability..",
+    'Worst Ramp Stress (06-06)': "Most demanding ramp-compliance day of the year. Features continuous high-frequency solar fluctuations caused by rapidly changing cloud conditions, forcing the BESS to respond almost continuously to maintain export ramp limits. Primarily stresses cumulative battery utilization and overall ramp-control capability.",
     'Highest Variability (02-26)': "Contains the largest short-duration solar power fluctuation observed in the dataset (111.26 MW/min gain and 65.86 MW/min drop), including extreme MW/min ramps caused by dense transient cloud cover. Primarily stresses instantaneous BESS power capability (MW), fast-response performance, and short-term ramp absorption requirements.",
     'Largest SOC Swing (11-28)': "Produces the deepest sustained battery charge-discharge cycle of the year due to prolonged asymmetric solar variability. Primarily stresses usable energy capacity (MWh) and the BESS ability to maintain compliance during extended ramp events without energy depletion.",
     'Highest Solar Generation (03-17)': "Represents the highest overall solar production day of the year, with extended periods operating near or above the 100 MW export limit. Primarily stresses inherent clipping behavior and the interaction between export limiting and ramp-control operation.",
