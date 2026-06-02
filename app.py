@@ -152,7 +152,7 @@ st.plotly_chart(fig, use_container_width=True)
 # ------------------------------------------------------------------
 
 st.markdown(
-    '<div class="section-header">Annual Battery SOC Profile</div>',
+    '<div class="section-header">Annual SOC Profile</div>',
     unsafe_allow_html=True
 )
 
