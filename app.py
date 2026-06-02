@@ -210,6 +210,7 @@ fig_soc.add_hline(
     y=soc_lower,
     line_dash='dash',
     line_width=1,
+    annotation_position='bottom right',
     annotation_text=f'Lower Limit ({soc_lower:.0f}%)'
 )
 
@@ -217,6 +218,7 @@ fig_soc.add_hline(
     y=soc_upper,
     line_dash='dash',
     line_width=1,
+    annotation_position='top right',
     annotation_text=f'Upper Limit ({soc_upper:.0f}%)'
 )
 
