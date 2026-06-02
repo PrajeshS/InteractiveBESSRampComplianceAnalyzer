@@ -161,11 +161,14 @@ soc_upper = soc_max * 100
 
 
 
-annual_dates = pd.date_range(
-    start='2025-01-01',
-    periods=len(soc),
-    freq='min'
-)
+@st.cache_data
+def get_annual_dates():
+    return pd.date_range(
+        start='2025-01-01',
+        periods=525600,
+        freq='min'
+    )
+annual_dates = get_annual_dates()
 
 fig_soc = go.Figure()
 
