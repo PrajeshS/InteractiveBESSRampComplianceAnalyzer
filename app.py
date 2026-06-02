@@ -159,20 +159,7 @@ st.markdown(
 soc_lower = soc_min * 100
 soc_upper = soc_max * 100
 
-# Highlight periods where battery is pinned at operating limits
-soc_limit = np.where(
-    (soc <= soc_lower + 0.01) |
-    (soc >= soc_upper - 0.01),
-    soc,
-    np.nan
-)
 
-soc_normal = np.where(
-    (soc > soc_lower + 0.01) &
-    (soc < soc_upper - 0.01),
-    soc,
-    np.nan
-)
 
 annual_dates = pd.date_range(
     start='2025-01-01',
@@ -182,31 +169,39 @@ annual_dates = pd.date_range(
 
 fig_soc = go.Figure()
 
-# Normal operating SOC
+# Continuous SOC line
 fig_soc.add_trace(
     go.Scatter(
         x=annual_dates,
-        y=soc_normal,
+        y=soc,
         mode='lines',
-        connectgaps=False,
         name='SOC (%)',
         line=dict(color='#f2cc60', width=1),
-        hovertemplate='Minute %{x:,}<br>SOC %{y:.2f}%<extra></extra>'
+        hovertemplate='%{x|%d %b}<br>SOC %{y:.2f}%<extra></extra>'
     )
 )
 
-# SOC at limits (battery cannot provide further support in one direction)
+# Points where SOC is at a limit
+limit_mask = (
+    (soc <= soc_lower + 0.01) |
+    (soc >= soc_upper - 0.01)
+)
+
 fig_soc.add_trace(
     go.Scatter(
-        x=annual_dates,
-        y=soc_limit,
-        mode='lines',
-        connectgaps=False,
-        name='SOC Limit Reached (%)',
-        line=dict(color='red', width=2),
-        hovertemplate='Minute %{x:,}<br>SOC %{y:.2f}%<extra></extra>'
+        x=annual_dates[limit_mask],
+        y=soc[limit_mask],
+        mode='markers',
+        name='SOC Limit Reached',
+        marker=dict(
+            color='red',
+            size=4
+        ),
+        hovertemplate='%{x|%d %b}<br>SOC %{y:.2f}%<extra></extra>'
     )
 )
+
+
 
 fig_soc.add_hline(
     y=soc_lower,
