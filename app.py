@@ -145,7 +145,7 @@ fig.add_trace(go.Scatter(x=times, y=pv_signal[s:e], name='Raw Solar (MW)', line=
 fig.add_trace(go.Scatter(x=times, y=export[s:e], name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
 fig.add_trace(go.Scatter(x=times, y=bess[s:e], name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
 fig.add_trace(go.Scatter(x=times, y=soc[s:e], name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
-fig.update_layout(hovermode='x unified', yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC %'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
+fig.update_layout(hovermode='x unified', yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
 st.plotly_chart(fig, use_container_width=True)
 # ------------------------------------------------------------------
 # Annual SOC Profile (Full-Year Simulation)
