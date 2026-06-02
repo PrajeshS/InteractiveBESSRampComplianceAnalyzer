@@ -175,7 +175,7 @@ soc_normal = np.where(
 )
 
 annual_dates = pd.date_range(
-    start='2024-01-01',
+    start='2025-01-01',
     periods=len(soc),
     freq='min'
 )
