@@ -174,14 +174,18 @@ soc_normal = np.where(
     np.nan
 )
 
-annual_days = np.arange(len(soc)) / 1440
+annual_dates = pd.date_range(
+    start='2024-01-01',
+    periods=len(soc),
+    freq='min'
+)
 
 fig_soc = go.Figure()
 
 # Normal operating SOC
 fig_soc.add_trace(
     go.Scatter(
-        x=annual_days,
+        x=annual_dates,
         y=soc_normal,
         mode='lines',
         name='SOC (%)',
@@ -193,7 +197,7 @@ fig_soc.add_trace(
 # SOC at limits (battery cannot provide further support in one direction)
 fig_soc.add_trace(
     go.Scatter(
-        x=annual_minutes,
+        x=annual_dates,
         y=soc_limit,
         mode='lines',
         name='SOC Limit Reached',
@@ -220,7 +224,7 @@ fig_soc.update_layout(
     template='plotly_dark',
     height=500,
     hovermode='x unified',
-    xaxis_title='Day of Year',
+    xaxis_title='Date'
     yaxis_title='SOC (%)',
     yaxis=dict(range=[0, 100]),
     legend=dict(
