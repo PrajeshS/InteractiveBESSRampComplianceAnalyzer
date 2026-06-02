@@ -147,3 +147,86 @@ fig.add_trace(go.Scatter(x=times, y=bess[s:e], name='BESS MW', fill='tozeroy', l
 fig.add_trace(go.Scatter(x=times, y=soc[s:e], name='SOC %', yaxis='y2', line=dict(color='#f2cc60', width=2)))
 fig.update_layout(hovermode='x unified', yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC %'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
 st.plotly_chart(fig, use_container_width=True)
+# ------------------------------------------------------------------
+# Annual SOC Profile (Full-Year Simulation)
+# ------------------------------------------------------------------
+
+st.markdown(
+    '<div class="section-header">Annual Battery SOC Profile</div>',
+    unsafe_allow_html=True
+)
+
+soc_lower = soc_min * 100
+soc_upper = soc_max * 100
+
+# Highlight periods where battery is pinned at operating limits
+soc_limit = np.where(
+    (soc <= soc_lower + 0.01) |
+    (soc >= soc_upper - 0.01),
+    soc,
+    np.nan
+)
+
+soc_normal = np.where(
+    (soc > soc_lower + 0.01) &
+    (soc < soc_upper - 0.01),
+    soc,
+    np.nan
+)
+
+annual_minutes = np.arange(len(soc))
+
+fig_soc = go.Figure()
+
+# Normal operating SOC
+fig_soc.add_trace(
+    go.Scatter(
+        x=annual_minutes,
+        y=soc_normal,
+        mode='lines',
+        name='SOC (%)',
+        line=dict(color='#f2cc60', width=1),
+        hovertemplate='Minute %{x:,}<br>SOC %{y:.2f}%<extra></extra>'
+    )
+)
+
+# SOC at limits (battery cannot provide further support in one direction)
+fig_soc.add_trace(
+    go.Scatter(
+        x=annual_minutes,
+        y=soc_limit,
+        mode='lines',
+        name='SOC Limit Reached',
+        line=dict(color='red', width=2),
+        hovertemplate='Minute %{x:,}<br>SOC %{y:.2f}%<extra></extra>'
+    )
+)
+
+fig_soc.add_hline(
+    y=soc_lower,
+    line_dash='dash',
+    line_width=1,
+    annotation_text=f'Lower Limit ({soc_lower:.0f}%)'
+)
+
+fig_soc.add_hline(
+    y=soc_upper,
+    line_dash='dash',
+    line_width=1,
+    annotation_text=f'Upper Limit ({soc_upper:.0f}%)'
+)
+
+fig_soc.update_layout(
+    template='plotly_dark',
+    height=500,
+    hovermode='x unified',
+    xaxis_title='Minute of Year',
+    yaxis_title='SOC (%)',
+    yaxis=dict(range=[0, 100]),
+    legend=dict(
+        orientation='h',
+        y=1.05
+    )
+)
+
+st.plotly_chart(fig_soc, use_container_width=True)
