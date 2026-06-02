@@ -188,6 +188,7 @@ fig_soc.add_trace(
         x=annual_dates,
         y=soc_normal,
         mode='lines',
+        connectgaps=False,
         name='SOC (%)',
         line=dict(color='#f2cc60', width=1),
         hovertemplate='Minute %{x:,}<br>SOC %{y:.2f}%<extra></extra>'
@@ -200,6 +201,7 @@ fig_soc.add_trace(
         x=annual_dates,
         y=soc_limit,
         mode='lines',
+        connectgaps=False,
         name='SOC Limit Reached (%)',
         line=dict(color='red', width=2),
         hovertemplate='Minute %{x:,}<br>SOC %{y:.2f}%<extra></extra>'
