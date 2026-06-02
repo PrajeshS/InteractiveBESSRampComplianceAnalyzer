@@ -174,14 +174,14 @@ soc_normal = np.where(
     np.nan
 )
 
-annual_minutes = np.arange(len(soc))
+annual_days = np.arange(len(soc)) / 1440
 
 fig_soc = go.Figure()
 
 # Normal operating SOC
 fig_soc.add_trace(
     go.Scatter(
-        x=annual_minutes,
+        x=annual_days,
         y=soc_normal,
         mode='lines',
         name='SOC (%)',
@@ -220,7 +220,7 @@ fig_soc.update_layout(
     template='plotly_dark',
     height=500,
     hovermode='x unified',
-    xaxis_title='Minute of Year',
+    xaxis_title='Day of Year',
     yaxis_title='SOC (%)',
     yaxis=dict(range=[0, 100]),
     legend=dict(
