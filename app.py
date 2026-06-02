@@ -224,7 +224,7 @@ fig_soc.update_layout(
     template='plotly_dark',
     height=500,
     hovermode='x unified',
-    xaxis_title='Date'
+    xaxis_title='Date',
     yaxis_title='SOC (%)',
     yaxis=dict(range=[0, 100]),
     legend=dict(
