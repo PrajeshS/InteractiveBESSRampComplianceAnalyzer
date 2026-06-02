@@ -171,7 +171,7 @@ fig_soc = go.Figure()
 
 # Continuous SOC line
 fig_soc.add_trace(
-    go.Scattergl(
+    go.Scatter(
         x=annual_dates,
         y=soc,
         mode='lines',
@@ -188,7 +188,7 @@ limit_mask = (
 )
 
 fig_soc.add_trace(
-    go.Scattergl(
+    go.Scatter(
         x=annual_dates[limit_mask],
         y=soc[limit_mask],
         mode='markers',
