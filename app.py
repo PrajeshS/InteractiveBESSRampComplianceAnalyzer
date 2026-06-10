@@ -129,18 +129,23 @@ def get_annual_dates():
     )
 annual_dates = get_annual_dates()
 @st.cache_data
-def compute_daily_ideal_energy(ideal_bess, dates):
-
+def compute_daily_ideal_energy(ideal_bess):
     bess_mwh = ideal_bess / 60.0
 
     df = pd.DataFrame({
-        "time": dates,
         "bess": bess_mwh
     })
 
+    # attach index inside function
+    df["time"] = pd.date_range(
+        start="2025-01-01",
+        periods=len(bess_mwh),
+        freq="min"
+    )
+
     return df.resample("D", on="time")["bess"].sum()
 
-daily_ideal_energy = compute_daily_ideal_energy(ideal_bess, annual_dates)
+daily_ideal_energy = compute_daily_ideal_energy(ideal_bess)
 
 # --- UI Display ---
 c1, c2, c3, c4 = st.columns(4)
