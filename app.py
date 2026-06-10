@@ -299,7 +299,7 @@ fig_ideal.update_layout(
     height=450,
     hovermode="x unified",
     xaxis_title="Date",
-    yaxis_title="BESS Throughput (MWh/day)"
+    yaxis_title="Net BESS Energy Required for ±3 MW/min Ramp Compliance (MWh/day)"
 )
 
 st.plotly_chart(fig_ideal, use_container_width=True)
