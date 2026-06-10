@@ -280,7 +280,7 @@ fig_soc.update_layout(
 
 st.plotly_chart(fig_soc, use_container_width=True)
 st.markdown(
-    '<div class="section-header">Ideal BESS Daily Activity</div>',
+    '<div class="section-header">Ideal BESS Daily Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
 )
 
@@ -299,7 +299,7 @@ fig_ideal.update_layout(
     height=450,
     hovermode="x unified",
     xaxis_title="Date",
-    yaxis_title="Net BESS Energy Required for ±3 MW/min Ramp Compliance (MWh/day)"
+    yaxis_title="Net BESS Energy (MWh)"
 )
 
 st.plotly_chart(fig_ideal, use_container_width=True)
