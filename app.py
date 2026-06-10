@@ -157,7 +157,7 @@ ideal_export, ideal_bess = calculate_ideal_bess(
 )
 ideal_df = pd.DataFrame({
     "time": annual_dates,
-    "energy": np.abs(ideal_bess) / 60.0
+    "energy": (ideal_bess) / 60.0
 })
 
 daily_ideal_energy = (
