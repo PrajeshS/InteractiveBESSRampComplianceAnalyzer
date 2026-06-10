@@ -116,6 +116,30 @@ export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, 
     pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way, ramp_thresh
 )
 
+# ------------------------------------------------------------------
+# Annual Net Daily BESS Energy (Charge - Discharge)
+# ------------------------------------------------------------------
+
+st.markdown(
+    '<div class="section-header">Annual Net BESS Energy Balance</div>',
+    unsafe_allow_html=True
+)
+
+@st.cache_data
+def compute_daily_net_bess_energy(bess_power):
+    # Convert MW → MWh per minute timestep
+    bess_mwh_series = bess_power / 60.0  # signed value
+
+    # reshape into full-year days (365 x 1440)
+    daily = bess_mwh_series.reshape(365, 1440)
+
+    # sum per day (signed net energy)
+    daily_net = daily.sum(axis=1)
+
+    return daily_net
+
+daily_net_bess_mwh = compute_daily_net_bess_energy(bess)
+
 # --- UI Display ---
 c1, c2, c3, c4 = st.columns(4)
 c1.metric('Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
@@ -236,3 +260,23 @@ fig_soc.update_layout(
 )
 
 st.plotly_chart(fig_soc, use_container_width=True)
+fig_daily = go.Figure()
+
+fig_daily.add_trace(
+    go.Bar(
+        x=np.arange(1, 366),
+        y=daily_bess_mwh,
+        name="Daily BESS Energy (MWh)",
+        marker_color="#58a6ff"
+    )
+)
+
+fig_daily.update_layout(
+    template="plotly_dark",
+    height=450,
+    xaxis_title="Day of Year",
+    yaxis_title="BESS Energy Throughput (MWh/day)",
+    hovermode="x unified"
+)
+
+st.plotly_chart(fig_daily, use_container_width=True)
