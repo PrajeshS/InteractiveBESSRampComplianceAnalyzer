@@ -260,23 +260,33 @@ fig_soc.update_layout(
 )
 
 st.plotly_chart(fig_soc, use_container_width=True)
-fig_daily = go.Figure()
+fig_net = go.Figure()
 
-fig_daily.add_trace(
+fig_net.add_trace(
     go.Bar(
         x=np.arange(1, 366),
-        y=daily_bess_mwh,
-        name="Daily BESS Energy (MWh)",
-        marker_color="#58a6ff"
+        y=daily_net_bess_mwh,
+        name="Net BESS Energy (MWh/day)",
+        marker_color=[
+            "#238636" if v >= 0 else "#f85149"
+            for v in daily_net_bess_mwh
+        ]
     )
 )
 
-fig_daily.update_layout(
+fig_net.add_hline(
+    y=0,
+    line_width=1,
+    line_color="white",
+    line_dash="dash"
+)
+
+fig_net.update_layout(
     template="plotly_dark",
     height=450,
     xaxis_title="Day of Year",
-    yaxis_title="BESS Energy Throughput (MWh/day)",
+    yaxis_title="Net BESS Energy (MWh/day)",
     hovermode="x unified"
 )
 
-st.plotly_chart(fig_daily, use_container_width=True)
+st.plotly_chart(fig_net, use_container_width=True)
