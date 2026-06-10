@@ -61,8 +61,8 @@ def load_data():
     return np.zeros(525600)
 
 def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, threshold):
-    ideal_bess = np.zeros(n)
     n = len(pv_data)
+    ideal_bess = np.zeros(n)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
     violations, day_mins = 0, 0
@@ -121,17 +121,26 @@ export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, 
     pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way, ramp_thresh
 )
 @st.cache_data
-def compute_daily_ideal_energy(ideal_bess):
-    bess_mwh = ideal_bess / 60.0  # MW → MWh per minute
+def get_annual_dates():
+    return pd.date_range(
+        start='2025-01-01',
+        periods=525600,
+        freq='min'
+    )
+annual_dates = get_annual_dates()
+@st.cache_data
+def compute_daily_ideal_energy(ideal_bess, dates):
+
+    bess_mwh = ideal_bess / 60.0
 
     df = pd.DataFrame({
-        "time": annual_dates,
+        "time": dates,
         "bess": bess_mwh
     })
 
     return df.resample("D", on="time")["bess"].sum()
 
-daily_ideal_energy = compute_daily_ideal_energy(ideal_bess)
+daily_ideal_energy = compute_daily_ideal_energy(ideal_bess, annual_dates)
 
 # --- UI Display ---
 c1, c2, c3, c4 = st.columns(4)
@@ -178,14 +187,7 @@ soc_upper = soc_max * 100
 
 
 
-@st.cache_data
-def get_annual_dates():
-    return pd.date_range(
-        start='2025-01-01',
-        periods=525600,
-        freq='min'
-    )
-annual_dates = get_annual_dates()
+
 
 fig_soc = go.Figure()
 
