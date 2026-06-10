@@ -62,7 +62,6 @@ def load_data():
 
 def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, threshold):
     n = len(pv_data)
-    ideal_bess = np.zeros(n)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
     violations, day_mins = 0, 0
@@ -84,11 +83,8 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, thre
         target = 0
         if raw_ramp > threshold: target = raw_ramp - threshold
         elif raw_ramp < -threshold: target = raw_ramp + threshold
-            
-        # -----------------------------
-        # Ideal unconstrained BESS
-        # -----------------------------
-        ideal_bess[t] = target
+
+       
         actual_bess = 0
         if target > 0: # Charge required
             available_pwr = ((e_max - curr_energy) * 60) / eff
@@ -114,10 +110,10 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, thre
 
         if pv > 0.5 and abs(exp - prev_export) > (threshold + 0.001): violations += 1
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, d_solar, d_export, d_curtail, d_bess_mwh, ideal_bess
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, d_solar, d_export, d_curtail, d_bess_mwh
 
 pv_signal = load_data()
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db, ideal_bess = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db = run_sim(
     pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way, ramp_thresh
 )
 @st.cache_data
@@ -128,24 +124,47 @@ def get_annual_dates():
         freq='min'
     )
 annual_dates = get_annual_dates()
+# ------------------------------------------------------------------
+# Ideal Infinite BESS Required For ±3 MW/min Compliance
+# ------------------------------------------------------------------
+
 @st.cache_data
-def compute_daily_ideal_energy(ideal_bess):
-    bess_mwh = ideal_bess / 60.0
+def calculate_ideal_bess(pv_data, ramp_limit=3.0):
 
-    df = pd.DataFrame({
-        "bess": bess_mwh
-    })
+    pv_capped = np.minimum(pv_data, 100.0)
 
-    # attach index inside function
-    df["time"] = pd.date_range(
-        start="2025-01-01",
-        periods=len(bess_mwh),
-        freq="min"
-    )
+    ideal_export = np.zeros(len(pv_capped))
+    ideal_bess = np.zeros(len(pv_capped))
 
-    return df.resample("D", on="time")["bess"].sum()
+    ideal_export[0] = pv_capped[0]
 
-daily_ideal_energy = compute_daily_ideal_energy(ideal_bess)
+    for t in range(1, len(pv_capped)):
+
+        ideal_export[t] = np.clip(
+            pv_capped[t],
+            ideal_export[t-1] - ramp_limit,
+            ideal_export[t-1] + ramp_limit
+        )
+
+        ideal_bess[t] = pv_capped[t] - ideal_export[t]
+
+    return ideal_export, ideal_bess
+
+
+ideal_export, ideal_bess = calculate_ideal_bess(
+    pv_signal,
+    ramp_thresh
+)
+ideal_df = pd.DataFrame({
+    "time": annual_dates,
+    "energy": np.abs(ideal_bess) / 60.0
+})
+
+daily_ideal_energy = (
+    ideal_df
+    .resample("D", on="time")["energy"]
+    .sum()
+)
 
 # --- UI Display ---
 c1, c2, c3, c4 = st.columns(4)
@@ -261,7 +280,7 @@ fig_soc.update_layout(
 
 st.plotly_chart(fig_soc, use_container_width=True)
 st.markdown(
-    '<div class="section-header">Theoretical Ramp Compliance Energy (Ideal BESS)</div>',
+    '<div class="section-header">Ideal BESS Daily Activity</div>',
     unsafe_allow_html=True
 )
 
@@ -271,22 +290,16 @@ fig_ideal.add_trace(
     go.Bar(
         x=daily_ideal_energy.index,
         y=daily_ideal_energy.values,
-        marker_color=[
-            "#238636" if v >= 0 else "#f85149"
-            for v in daily_ideal_energy.values
-        ],
-        name="Ideal BESS Energy Requirement"
+        name="Ideal BESS Activity (MWh/day)"
     )
 )
-
-fig_ideal.add_hline(y=0, line_width=1, line_dash="dash")
 
 fig_ideal.update_layout(
     template="plotly_dark",
     height=450,
+    hovermode="x unified",
     xaxis_title="Date",
-    yaxis_title="Ideal Net Energy for Ramp Compliance (MWh/day)",
-    hovermode="x unified"
+    yaxis_title="BESS Throughput (MWh/day)"
 )
 
 st.plotly_chart(fig_ideal, use_container_width=True)
