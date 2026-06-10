@@ -61,6 +61,7 @@ def load_data():
     return np.zeros(525600)
 
 def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, threshold):
+    ideal_bess = np.zeros(n)
     n = len(pv_data)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
@@ -83,7 +84,11 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, thre
         target = 0
         if raw_ramp > threshold: target = raw_ramp - threshold
         elif raw_ramp < -threshold: target = raw_ramp + threshold
-
+            
+        # -----------------------------
+        # Ideal unconstrained BESS
+        # -----------------------------
+        ideal_bess[t] = target
         actual_bess = 0
         if target > 0: # Charge required
             available_pwr = ((e_max - curr_energy) * 60) / eff
@@ -109,36 +114,24 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, thre
 
         if pv > 0.5 and abs(exp - prev_export) > (threshold + 0.001): violations += 1
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, d_solar, d_export, d_curtail, d_bess_mwh
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, d_solar, d_export, d_curtail, d_bess_mwh, ideal_bess
 
 pv_signal = load_data()
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db, ideal_bess = run_sim(
     pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way, ramp_thresh
 )
-
-# ------------------------------------------------------------------
-# Annual Net Daily BESS Energy (Charge - Discharge)
-# ------------------------------------------------------------------
-
-st.markdown(
-    '<div class="section-header">Annual Net BESS Energy Balance</div>',
-    unsafe_allow_html=True
-)
-
 @st.cache_data
-def compute_daily_net_bess_energy(bess_power):
-    # Convert MW → MWh per minute timestep
-    bess_mwh_series = bess_power / 60.0  # signed value
+def compute_daily_ideal_energy(ideal_bess):
+    bess_mwh = ideal_bess / 60.0  # MW → MWh per minute
 
-    # reshape into full-year days (365 x 1440)
-    daily = bess_mwh_series.reshape(365, 1440)
+    df = pd.DataFrame({
+        "time": annual_dates,
+        "bess": bess_mwh
+    })
 
-    # sum per day (signed net energy)
-    daily_net = daily.sum(axis=1)
+    return df.resample("D", on="time")["bess"].sum()
 
-    return daily_net
-
-daily_net_bess_mwh = compute_daily_net_bess_energy(bess)
+daily_ideal_energy = compute_daily_ideal_energy(ideal_bess)
 
 # --- UI Display ---
 c1, c2, c3, c4 = st.columns(4)
@@ -260,33 +253,33 @@ fig_soc.update_layout(
 )
 
 st.plotly_chart(fig_soc, use_container_width=True)
-fig_net = go.Figure()
+st.markdown(
+    '<div class="section-header">Theoretical Ramp Compliance Energy (Ideal BESS)</div>',
+    unsafe_allow_html=True
+)
 
-fig_net.add_trace(
+fig_ideal = go.Figure()
+
+fig_ideal.add_trace(
     go.Bar(
-        x=np.arange(1, 366),
-        y=daily_net_bess_mwh,
-        name="Net BESS Energy (MWh/day)",
+        x=daily_ideal_energy.index,
+        y=daily_ideal_energy.values,
         marker_color=[
             "#238636" if v >= 0 else "#f85149"
-            for v in daily_net_bess_mwh
-        ]
+            for v in daily_ideal_energy.values
+        ],
+        name="Ideal BESS Energy Requirement"
     )
 )
 
-fig_net.add_hline(
-    y=0,
-    line_width=1,
-    line_color="white",
-    line_dash="dash"
-)
+fig_ideal.add_hline(y=0, line_width=1, line_dash="dash")
 
-fig_net.update_layout(
+fig_ideal.update_layout(
     template="plotly_dark",
     height=450,
-    xaxis_title="Day of Year",
-    yaxis_title="Net BESS Energy (MWh/day)",
+    xaxis_title="Date",
+    yaxis_title="Ideal Net Energy for Ramp Compliance (MWh/day)",
     hovermode="x unified"
 )
 
-st.plotly_chart(fig_net, use_container_width=True)
+st.plotly_chart(fig_ideal, use_container_width=True)
