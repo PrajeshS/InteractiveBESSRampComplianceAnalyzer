@@ -113,6 +113,11 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, thre
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, d_solar, d_export, d_curtail, d_bess_mwh
 
 pv_signal = load_data()
+annual_dates = get_annual_dates()
+ideal_export, ideal_bess = calculate_ideal_bess(
+    pv_signal,
+    ramp_thresh
+)
 export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db = run_sim(
     pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way, ramp_thresh
 )
@@ -123,7 +128,7 @@ def get_annual_dates():
         periods=525600,
         freq='min'
     )
-annual_dates = get_annual_dates()
+
 # ------------------------------------------------------------------
 # Ideal Infinite BESS Required For ±3 MW/min Compliance
 # ------------------------------------------------------------------
@@ -151,10 +156,7 @@ def calculate_ideal_bess(pv_data, ramp_limit=3.0):
     return ideal_export, ideal_bess
 
 
-ideal_export, ideal_bess = calculate_ideal_bess(
-    pv_signal,
-    ramp_thresh
-)
+
 ideal_df = pd.DataFrame({
     "time": annual_dates,
     "energy": (ideal_bess) / 60.0
