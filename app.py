@@ -231,7 +231,7 @@ soc_upper = soc_max * 100
 
 fig_soc = go.Figure()
 
-# Continuous SOC line
+# --- SOC (%) on left axis ---
 fig_soc.add_trace(
     go.Scatter(
         x=annual_dates,
@@ -243,7 +243,23 @@ fig_soc.add_trace(
     )
 )
 
-# Points where SOC is at a limit
+# --- Convert SOC% → Energy (MWh) ---
+soc_mwh = (soc / 100.0) * enr_cap
+
+# --- Energy (MWh) on right axis ---
+fig_soc.add_trace(
+    go.Scatter(
+        x=annual_dates,
+        y=soc_mwh,
+        mode='lines',
+        name='Energy (MWh)',
+        line=dict(color='#58a6ff', width=1),
+        yaxis='y2',
+        hovertemplate='%{x|%d %b}<br>Energy %{y:.2f} MWh<extra></extra>'
+    )
+)
+
+# --- Limit detection (still SOC-based) ---
 limit_mask = (
     (soc <= soc_lower + 0.01) |
     (soc >= soc_upper - 0.01)
@@ -255,21 +271,16 @@ fig_soc.add_trace(
         y=soc[limit_mask],
         mode='markers',
         name='SOC Limit Reached',
-        marker=dict(
-            color='red',
-            size=4
-        ),
+        marker=dict(color='red', size=4),
         hovertemplate='%{x|%d %b}<br>SOC %{y:.2f}%<extra></extra>'
     )
 )
 
-
-
+# --- SOC limits ---
 fig_soc.add_hline(
     y=soc_lower,
     line_dash='dash',
     line_width=1,
-    annotation_position='bottom right',
     annotation_text=f'Lower Limit ({soc_lower:.0f}%)'
 )
 
@@ -277,21 +288,27 @@ fig_soc.add_hline(
     y=soc_upper,
     line_dash='dash',
     line_width=1,
-    annotation_position='top right',
     annotation_text=f'Upper Limit ({soc_upper:.0f}%)'
 )
 
+# --- Layout with secondary axis ---
 fig_soc.update_layout(
     template='plotly_dark',
     height=500,
     hovermode='x unified',
     xaxis_title='Date',
-    yaxis_title='SOC (%)',
-    yaxis=dict(range=[0, 100]),
-    legend=dict(
-        orientation='h',
-        y=1.05
-    )
+    yaxis=dict(
+        title='SOC (%)',
+        range=[0, 100]
+    ),
+    yaxis2=dict(
+        title='Energy (MWh)',
+        overlaying='y',
+        side='right',
+        showgrid=False,
+        range=[0, enr_cap]
+    ),
+    legend=dict(orientation='h', y=1.05)
 )
 
 st.plotly_chart(fig_soc, use_container_width=True)
