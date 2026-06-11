@@ -180,7 +180,30 @@ c6.metric('Grid Export', f'{a_export:,.0f} MWh')
 c7.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c9.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
+st.markdown(
+    '<div class="section-header">Ideal BESS Daily Net Energy Required for ±3 MW/min Ramp Compliance</div>',
+    unsafe_allow_html=True
+)
 
+fig_ideal = go.Figure()
+
+fig_ideal.add_trace(
+    go.Bar(
+        x=daily_ideal_energy.index,
+        y=daily_ideal_energy.values,
+        name="Ideal BESS Activity (MWh/day)"
+    )
+)
+
+fig_ideal.update_layout(
+    template="plotly_dark",
+    height=450,
+    hovermode="x unified",
+    xaxis_title="Date",
+    yaxis_title="Net BESS Energy (MWh)"
+)
+
+st.plotly_chart(fig_ideal, use_container_width=True)
 st.markdown('<div class="section-header">Daily Energy Budget (Selected Day)</div>', unsafe_allow_html=True)
 d1, d2, d3, d4 = st.columns(4)
 d1.metric('Daily Solar', f'{ds:,.1f} MWh')
@@ -279,27 +302,4 @@ fig_soc.update_layout(
 )
 
 st.plotly_chart(fig_soc, use_container_width=True)
-st.markdown(
-    '<div class="section-header">Ideal BESS Daily Net Energy Required for ±3 MW/min Ramp Compliance</div>',
-    unsafe_allow_html=True
-)
 
-fig_ideal = go.Figure()
-
-fig_ideal.add_trace(
-    go.Bar(
-        x=daily_ideal_energy.index,
-        y=daily_ideal_energy.values,
-        name="Ideal BESS Activity (MWh/day)"
-    )
-)
-
-fig_ideal.update_layout(
-    template="plotly_dark",
-    height=450,
-    hovermode="x unified",
-    xaxis_title="Date",
-    yaxis_title="Net BESS Energy (MWh)"
-)
-
-st.plotly_chart(fig_ideal, use_container_width=True)
