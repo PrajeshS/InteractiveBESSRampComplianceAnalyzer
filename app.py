@@ -181,24 +181,12 @@ c7.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c9.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
 
-st.plotly_chart(fig_ideal, use_container_width=True)
 st.markdown('<div class="section-header">Daily Energy Budget (Selected Day)</div>', unsafe_allow_html=True)
 d1, d2, d3, d4 = st.columns(4)
 d1.metric('Daily Solar', f'{ds:,.1f} MWh')
 d2.metric('Daily Export', f'{de:,.1f} MWh')
 d3.metric('Inherent Curtailment', f'{dc:,.1f} MWh')
 d4.metric('Daily BESS Effort', f'{db:,.1f} MWh')
-
-s, e = selected_day * 1440, (selected_day + 1) * 1440
-times = [f"{h:02d}:{m:02d}" for h in range(24) for m in range(60)]
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=times, y=pv_signal[s:e], name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
-fig.add_trace(go.Scatter(x=times, y=export[s:e], name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
-fig.add_trace(go.Scatter(x=times, y=bess[s:e], name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
-fig.add_trace(go.Scatter(x=times, y=soc[s:e], name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
-fig.update_layout(hovermode='x unified', xaxis=dict(title='Time'), yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
-st.plotly_chart(fig, use_container_width=True)
-
 st.markdown(
     '<div class="section-header">Ideal BESS Daily Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
@@ -221,6 +209,16 @@ fig_ideal.update_layout(
     xaxis_title="Date",
     yaxis_title="Net BESS Energy (MWh)"
 )
+st.plotly_chart(fig_ideal, use_container_width=True)
+s, e = selected_day * 1440, (selected_day + 1) * 1440
+times = [f"{h:02d}:{m:02d}" for h in range(24) for m in range(60)]
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=times, y=pv_signal[s:e], name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
+fig.add_trace(go.Scatter(x=times, y=export[s:e], name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
+fig.add_trace(go.Scatter(x=times, y=bess[s:e], name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
+fig.add_trace(go.Scatter(x=times, y=soc[s:e], name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
+fig.update_layout(hovermode='x unified', xaxis=dict(title='Time'), yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
+st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------------
 # Annual SOC Profile (Full-Year Simulation)
