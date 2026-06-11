@@ -59,7 +59,34 @@ def load_data():
     if os.path.exists(csv_path):
         return pd.read_csv(csv_path)['Solar_MW'].values
     return np.zeros(525600)
+@st.cache_data
+def get_annual_dates():
+    return pd.date_range(
+        start='2025-01-01',
+        periods=525600,
+        freq='min'
+    )
+@st.cache_data
+def calculate_ideal_bess(pv_data, ramp_limit=3.0):
 
+    pv_capped = np.minimum(pv_data, 100.0)
+
+    ideal_export = np.zeros(len(pv_capped))
+    ideal_bess = np.zeros(len(pv_capped))
+
+    ideal_export[0] = pv_capped[0]
+
+    for t in range(1, len(pv_capped)):
+
+        ideal_export[t] = np.clip(
+            pv_capped[t],
+            ideal_export[t-1] - ramp_limit,
+            ideal_export[t-1] + ramp_limit
+        )
+
+        ideal_bess[t] = pv_capped[t] - ideal_export[t]
+
+    return ideal_export, ideal_bess
 def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff, threshold):
     n = len(pv_data)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
@@ -121,41 +148,6 @@ ideal_export, ideal_bess = calculate_ideal_bess(
 export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db = run_sim(
     pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way, ramp_thresh
 )
-@st.cache_data
-def get_annual_dates():
-    return pd.date_range(
-        start='2025-01-01',
-        periods=525600,
-        freq='min'
-    )
-
-# ------------------------------------------------------------------
-# Ideal Infinite BESS Required For ±3 MW/min Compliance
-# ------------------------------------------------------------------
-
-@st.cache_data
-def calculate_ideal_bess(pv_data, ramp_limit=3.0):
-
-    pv_capped = np.minimum(pv_data, 100.0)
-
-    ideal_export = np.zeros(len(pv_capped))
-    ideal_bess = np.zeros(len(pv_capped))
-
-    ideal_export[0] = pv_capped[0]
-
-    for t in range(1, len(pv_capped)):
-
-        ideal_export[t] = np.clip(
-            pv_capped[t],
-            ideal_export[t-1] - ramp_limit,
-            ideal_export[t-1] + ramp_limit
-        )
-
-        ideal_bess[t] = pv_capped[t] - ideal_export[t]
-
-    return ideal_export, ideal_bess
-
-
 
 ideal_df = pd.DataFrame({
     "time": annual_dates,
