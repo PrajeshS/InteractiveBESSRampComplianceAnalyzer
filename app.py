@@ -17,7 +17,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-header">BESS Ramp Compliance Simulator</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">BESS ±3 MW/min Ramp Compliance Simulator</div>', unsafe_allow_html=True)
 
 # --- Sidebar Controls ---
 st.sidebar.header("⚙️ Physical & Simulation Parameters")
