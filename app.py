@@ -199,6 +199,10 @@ fig_ideal.update_layout(
     yaxis_title="Net BESS Energy (MWh)"
 )
 st.plotly_chart(fig_ideal, use_container_width=True)
+st.markdown(
+    '<div class="section-header">Selected Event Day: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
+    unsafe_allow_html=True
+)
 s, e = selected_day * 1440, (selected_day + 1) * 1440
 times = [f"{h:02d}:{m:02d}" for h in range(24) for m in range(60)]
 fig = go.Figure()
