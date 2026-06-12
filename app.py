@@ -368,9 +368,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=annual_dates, y=pv_signal, name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
-fig.add_trace(go.Scatter(x=annual_dates, y=export, name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
+fig.add_trace(go.Scattergl(x=annual_dates, y=pv_signal, name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
+fig.add_trace(go.Scattergl(x=annual_dates, y=export, name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
 fig.add_trace(go.Scatter(x=annual_dates, y=bess, name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
-fig.add_trace(go.Scatter(x=annual_dates, y=soc, name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
+fig.add_trace(go.Scattergl(x=annual_dates, y=soc, name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
 fig.update_layout(hovermode='x unified', xaxis=dict(title='Date'), yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
 st.plotly_chart(fig, use_container_width=True)
