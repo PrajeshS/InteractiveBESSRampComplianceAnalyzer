@@ -95,6 +95,56 @@ def calculate_ideal_bess(pv_data):
 
     return ideal_export, ideal_bess
 @st.cache_data
+def calculate_required_initial_energy(pv_data, p_cap):
+
+    required_energy = []
+    energy_dates = []
+
+    for day in range(365):
+
+        start = day * 1440
+        end = (day + 1) * 1440
+
+        day_pv = pv_data[start:end]
+
+        export = np.zeros(len(day_pv))
+        bess = np.zeros(len(day_pv))
+
+        export[0] = min(day_pv[0], 100.0)
+
+        for t in range(1, len(day_pv)):
+
+            pv_now = min(day_pv[t], 100.0)
+
+            target_export = np.clip(
+                pv_now,
+                export[t-1] - RAMP_LIMIT_MW_PER_MIN,
+                export[t-1] + RAMP_LIMIT_MW_PER_MIN
+            )
+
+            required_bess = pv_now - target_export
+
+            required_bess = np.clip(
+                required_bess,
+                -p_cap,
+                p_cap
+            )
+
+            export[t] = pv_now - required_bess
+            bess[t] = required_bess
+
+        cumulative_energy = np.cumsum(
+            bess / 60.0
+        )
+
+        required_energy.append(max(0, -np.min(cumulative_energy)))
+
+        energy_dates.append(
+            annual_dates[start]
+        )
+
+    return energy_dates, required_energy
+@st.cache_data
 def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     n = len(pv_data)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
@@ -246,6 +296,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 pv_signal = load_data()
 annual_dates = get_annual_dates()
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
+required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
 export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh = run_sim(
     pv_signal,
     pwr_cap,
@@ -336,6 +387,33 @@ fig_ideal.update_layout(
     yaxis_title="Net BESS Energy (MWh)"
 )
 st.plotly_chart(fig_ideal, use_container_width=True)
+st.markdown(
+    '<div class="section-header">Daily Minimum Initial Stored Energy Required</div>',
+    unsafe_allow_html=True
+)
+
+fig_energy = go.Figure()
+
+fig_energy.add_trace(
+    go.Bar(
+        x=required_energy_dates,
+        y=required_initial_energy,
+        name='Required Initial Energy (MWh)'
+    )
+)
+
+fig_energy.update_layout(
+    template='plotly_dark',
+    height=450,
+    hovermode='x unified',
+    xaxis_title='Date',
+    yaxis_title='Required Initial Energy (MWh)'
+)
+
+st.plotly_chart(
+    fig_energy,
+    use_container_width=True
+)
 st.markdown(
     '<div class="section-header">BESS Daily Net Energy for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
