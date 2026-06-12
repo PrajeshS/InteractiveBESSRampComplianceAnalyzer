@@ -34,25 +34,25 @@ st.sidebar.header("📅 Key Reference Days")
 st.sidebar.markdown("""
 <div class="event-note">
 
-<b>06-06 — Worst Ramp Stress</b><br>
+<b>05-07 — Worst Ramp Stress</b><br>
 Most demanding ramp-compliance day of the year with continuous high-frequency solar fluctuations.
 
-<br><br>
+<br>
 
 <b>02-26 — Highest Variability</b><br>
 Largest short-duration solar ramps observed, including extreme MW/min increases and decreases.
 
-<br><br>
+<br>
 
-<b>11-28 — Largest SOC Swing</b><br>
+<b>03-17 — Largest SOC Swing</b><br>
 Deepest sustained charge-discharge cycle and greatest energy utilization.
 
-<br><br>
+<br>
 
 <b>03-17 — Highest Solar Generation</b><br>
 Highest annual solar production with extended operation near or above the 100 MW export limit.
 
-<br><br>
+<br>
 
 <b>12-13 — Lowest Solar Generation</b><br>
 Lowest irradiance day and useful baseline for low-stress operation.
@@ -94,6 +94,7 @@ def calculate_ideal_bess(pv_data):
         ideal_bess[t] = pv_capped[t] - ideal_export[t]
 
     return ideal_export, ideal_bess
+@st.cache_data
 def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     n = len(pv_data)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
@@ -367,9 +368,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 fig = go.Figure()
-fig.add_trace(go.Scattergl(x=annual_dates, y=pv_signal, name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
-fig.add_trace(go.Scattergl(x=annual_dates, y=export, name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
-fig.add_trace(go.Scattergl(x=annual_dates, y=bess, name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
-fig.add_trace(go.Scattergl(x=annual_dates, y=soc, name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
+fig.add_trace(go.Scatter(x=annual_dates, y=pv_signal, name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
+fig.add_trace(go.Scatter(x=annual_dates, y=export, name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
+fig.add_trace(go.Scatter(x=annual_dates, y=bess, name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
+fig.add_trace(go.Scatter(x=annual_dates, y=soc, name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
 fig.update_layout(hovermode='x unified', xaxis=dict(title='Date'), yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
 st.plotly_chart(fig, use_container_width=True)
