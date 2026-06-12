@@ -28,29 +28,37 @@ eff_one_way = st.sidebar.number_input('One-Way Efficiency', 0.80, 1.00, 0.96, st
 
 soc_choice = st.sidebar.selectbox('Operating SOC Window', ['0% - 100%', '10% - 90%', '20% - 80%', '30% - 70%'])
 soc_min, soc_max = [float(x.replace('%', '').strip())/100 for x in soc_choice.split('-')]
-
 st.sidebar.markdown('---')
-st.sidebar.header("📅 Event Timeline")
-day_options = {
-    'Worst Ramp Stress (06-06)': 156,
-    'Highest Variability (02-26)': 56,
-    'Largest SOC Swing (11-28)': 331,
-    'Highest Solar Generation (03-17)': 75,
-    'Lowest Solar Generation (12-13)': 346
-}
-selected_label = st.sidebar.selectbox('Select View Day', list(day_options.keys()))
-selected_day = day_options[selected_label]
+st.sidebar.header("📅 Key Reference Days")
 
-# Event Explanations (Engineering Context)
-event_notes = {
-    'Worst Ramp Stress (06-06)': "Most demanding ramp-compliance day of the year. Features continuous high-frequency solar fluctuations caused by rapidly changing cloud conditions, forcing the BESS to respond almost continuously to maintain export ramp limits. Primarily stresses cumulative battery utilization and overall ramp-control capability.",
-    'Highest Variability (02-26)': "Contains the largest short-duration solar power fluctuation observed in the dataset (111.26 MW/min gain and 65.86 MW/min drop), including extreme MW/min ramps caused by dense transient cloud cover. Primarily stresses instantaneous BESS power capability (MW), fast-response performance, and short-term ramp absorption requirements.",
-    'Largest SOC Swing (11-28)': "Produces the deepest sustained battery charge-discharge cycle of the year due to prolonged asymmetric solar variability. Primarily stresses usable energy capacity (MWh) and the BESS ability to maintain compliance during extended ramp events without energy depletion.",
-    'Highest Solar Generation (03-17)': "Represents the highest overall solar production day of the year, with extended periods operating near or above the 100 MW export limit. Primarily stresses inherent clipping behavior and the interaction between export limiting and ramp-control operation.",
-    'Lowest Solar Generation (12-13)': "Low-irradiance baseline operating day with minimal solar variability and limited BESS intervention. Useful for benchmarking idle system behavior, verifying low-stress operational stability, and comparing controller response under near-steady-state conditions."
-}
-if selected_label in event_notes:
-    st.sidebar.markdown(f'<div class="event-note">💡 <b>Note:</b> {event_notes[selected_label]}</div>', unsafe_allow_html=True)
+st.sidebar.markdown("""
+<div class="event-note">
+
+<b>06-06 — Worst Ramp Stress</b><br>
+Most demanding ramp-compliance day of the year with continuous high-frequency solar fluctuations.
+
+<br><br>
+
+<b>02-26 — Highest Variability</b><br>
+Largest short-duration solar ramps observed, including extreme MW/min increases and decreases.
+
+<br><br>
+
+<b>11-28 — Largest SOC Swing</b><br>
+Deepest sustained charge-discharge cycle and greatest energy utilization.
+
+<br><br>
+
+<b>03-17 — Highest Solar Generation</b><br>
+Highest annual solar production with extended operation near or above the 100 MW export limit.
+
+<br><br>
+
+<b>12-13 — Lowest Solar Generation</b><br>
+Lowest irradiance day and useful baseline for low-stress operation.
+
+</div>
+""", unsafe_allow_html=True)
 
 @st.cache_data
 def load_data():
@@ -86,15 +94,15 @@ def calculate_ideal_bess(pv_data):
         ideal_bess[t] = pv_capped[t] - ideal_export[t]
 
     return ideal_export, ideal_bess
-def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff):
+def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     n = len(pv_data)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
     violations, day_mins = 0, 0
     t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh = 0, 0, 0, 0, 0
-    d_solar, d_export, d_curtail, d_bess_mwh = 0, 0, 0, 0
+
     e_min, e_max = s_min * e_cap, s_max * e_cap
-    d_start, d_end = s_day * 1440, (s_day + 1) * 1440
+
 
     for t in range(n):
         pv = pv_data[t]
@@ -230,26 +238,19 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff):
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
 
-        if t >= d_start and t < d_end:
-            d_solar += pv / 60
-            d_export += exp / 60
-            d_curtail += (max(0, pv - exp - (actual_bess if actual_bess > 0 else 0))) / 60
-            d_bess_mwh += abs(actual_bess) / 60
-
         if pv > 0.5 and abs(exp - prev_export) > (RAMP_LIMIT_MW_PER_MIN + 0.001): violations += 1
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, d_solar, d_export, d_curtail, d_bess_mwh
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh
 
 pv_signal = load_data()
 annual_dates = get_annual_dates()
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh = run_sim(
     pv_signal,
     pwr_cap,
     enr_cap,
     soc_min,
     soc_max,
-    selected_day,
     init_soc_pct,
     eff_one_way
 )
@@ -274,7 +275,6 @@ for day in range(365):
         enr_cap,
         soc_min,
         soc_max,
-        0,
         init_soc_pct,
         eff_one_way
     )
@@ -312,12 +312,6 @@ c7.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c9.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
 
-st.markdown('<div class="section-header">Daily Energy Budget (Selected Day)</div>', unsafe_allow_html=True)
-d1, d2, d3, d4 = st.columns(4)
-d1.metric('Daily Solar', f'{ds:,.1f} MWh')
-d2.metric('Daily Export', f'{de:,.1f} MWh')
-d3.metric('Inherent Curtailment', f'{dc:,.1f} MWh')
-d4.metric('Daily BESS Effort', f'{db:,.1f} MWh')
 st.markdown(
     '<div class="section-header">Ideal BESS Daily Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
@@ -369,116 +363,13 @@ st.plotly_chart(
     use_container_width=True
 )
 st.markdown(
-    '<div class="section-header">Selected Event Day: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
+    '<div class="section-header">Annual: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
 )
-s, e = selected_day * 1440, (selected_day + 1) * 1440
-times = [f"{h:02d}:{m:02d}" for h in range(24) for m in range(60)]
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=times, y=pv_signal[s:e], name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
-fig.add_trace(go.Scatter(x=times, y=export[s:e], name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
-fig.add_trace(go.Scatter(x=times, y=bess[s:e], name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
-fig.add_trace(go.Scatter(x=times, y=soc[s:e], name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
-fig.update_layout(hovermode='x unified', xaxis=dict(title='Time'), yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
+fig.add_trace(go.Scattergl(x=annual_dates, y=pv_signal, name='Raw Solar (MW)', line=dict(color='#8b949e', dash='dot')))
+fig.add_trace(go.Scattergl(x=annual_dates, y=export, name='Net Export (MW)', line=dict(color='#58a6ff', width=2)))
+fig.add_trace(go.Scattergl(x=annual_dates, y=bess, name='BESS (MW)', fill='tozeroy', line=dict(color='#238636', width=1)))
+fig.add_trace(go.Scattergl(x=annual_dates, y=soc, name='SOC (%)', yaxis='y2', line=dict(color='#f2cc60', width=2)))
+fig.update_layout(hovermode='x unified', xaxis=dict(title='Date'), yaxis=dict(title='Power (MW)'), yaxis2=dict(overlaying='y', side='right', range=[0,100], title='SOC (%)'), template='plotly_dark', height=550, legend=dict(orientation='h', y=1.1))
 st.plotly_chart(fig, use_container_width=True)
-
-# ------------------------------------------------------------------
-# Annual SOC Profile (Full-Year Simulation)
-# ------------------------------------------------------------------
-
-st.markdown(
-    '<div class="section-header">Annual SOC Profile</div>',
-    unsafe_allow_html=True
-)
-
-soc_lower = soc_min * 100
-soc_upper = soc_max * 100
-
-
-
-
-
-fig_soc = go.Figure()
-
-# --- SOC (%) on left axis ---
-fig_soc.add_trace(
-    go.Scatter(
-        x=annual_dates,
-        y=soc,
-        mode='lines',
-        name='SOC (%)',
-        line=dict(color='#f2cc60', width=1),
-        hovertemplate='%{x|%d %b}<br>SOC %{y:.2f}%<extra></extra>'
-    )
-)
-
-# --- Convert SOC% → Energy (MWh) ---
-soc_mwh = (soc / 100.0) * enr_cap
-
-# --- Energy (MWh) on right axis ---
-fig_soc.add_trace(
-    go.Scatter(
-        x=annual_dates,
-        y=soc_mwh,
-        mode='lines',
-        name='Energy (MWh)',
-        line=dict(color='#58a6ff', width=1),
-        yaxis='y2',
-        hovertemplate='%{x|%d %b}<br>Energy %{y:.2f} MWh<extra></extra>'
-    )
-)
-
-# --- Limit detection (still SOC-based) ---
-limit_mask = (
-    (soc <= soc_lower + 0.01) |
-    (soc >= soc_upper - 0.01)
-)
-
-fig_soc.add_trace(
-    go.Scatter(
-        x=annual_dates[limit_mask],
-        y=soc[limit_mask],
-        mode='markers',
-        name='SOC Limit Reached',
-        marker=dict(color='red', size=4),
-        hovertemplate='%{x|%d %b}<br>SOC %{y:.2f}%<extra></extra>'
-    )
-)
-
-# --- SOC limits ---
-fig_soc.add_hline(
-    y=soc_lower,
-    line_dash='dash',
-    line_width=1,
-    annotation_text=f'Lower Limit ({soc_lower:.0f}%)'
-)
-
-fig_soc.add_hline(
-    y=soc_upper,
-    line_dash='dash',
-    line_width=1,
-    annotation_text=f'Upper Limit ({soc_upper:.0f}%)'
-)
-
-# --- Layout with secondary axis ---
-fig_soc.update_layout(
-    template='plotly_dark',
-    height=500,
-    hovermode='x unified',
-    xaxis_title='Date',
-    yaxis=dict(
-        title='SOC (%)',
-        range=[0, 100]
-    ),
-    yaxis2=dict(
-        title='Energy (MWh)',
-        overlaying='y',
-        side='right',
-        showgrid=False,
-        range=[0, enr_cap]
-    ),
-    legend=dict(orientation='h', y=1.05)
-)
-
-st.plotly_chart(fig_soc, use_container_width=True)
-
