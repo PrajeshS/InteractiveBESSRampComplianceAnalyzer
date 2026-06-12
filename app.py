@@ -101,29 +101,131 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, s_day, start_soc_pct, eff):
         if pv > 0.5: day_mins += 1
         t_solar += pv / 60
 
-        prev_export = grid_export[t-1] if t > 0 else pv
+        prev_export = (
+        grid_export[t-1]
+        if t > 0
+        else min(pv, 100.0)
+        )
         raw_pv_capped = min(pv, 100.0)
         t_curtail_inh += max(0, pv - 100.0) / 60
 
-        raw_ramp = raw_pv_capped - prev_export
-        target = 0
-        if raw_ramp > RAMP_LIMIT_MW_PER_MIN: target = raw_ramp - RAMP_LIMIT_MW_PER_MIN
-        elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN: target = raw_ramp + RAMP_LIMIT_MW_PER_MIN
-
-       
+               # =====================================================
+        # TARGET SOC = UPPER SOC WINDOW LIMIT
+        # =====================================================
+        
         actual_bess = 0
-        if target > 0: # Charge required
-            available_pwr = ((e_max - curr_energy) * 60) / eff
-            actual_bess = min(target, p_cap, available_pwr)
-            curr_energy += (actual_bess * eff) / 60
-            if target > actual_bess:
-                t_curtail_ramp += (target - actual_bess) / 60
-        elif target < 0: # Discharge required
-            available_pwr = ((curr_energy - e_min) * 60) * eff
-            actual_bess = -min(abs(target), p_cap, available_pwr)
-            curr_energy += (actual_bess / eff) / 60
-
-        exp = raw_pv_capped - actual_bess
+        
+        target_soc_energy = e_max
+        
+        clipped_power = max(0, pv - 100.0)
+        
+        # -----------------------------------------------------
+        # 1. Charge from clipped energy first
+        # -----------------------------------------------------
+        
+        if curr_energy < target_soc_energy and clipped_power > 0:
+        
+            available_charge_power = (
+                (target_soc_energy - curr_energy) * 60
+            ) / eff
+        
+            clip_charge = min(
+                clipped_power,
+                p_cap,
+                available_charge_power
+            )
+        
+            curr_energy += (clip_charge * eff) / 60
+        
+            actual_bess += clip_charge
+        
+        # -----------------------------------------------------
+        # 2. Ramp calculation
+        # -----------------------------------------------------
+        
+        raw_ramp = raw_pv_capped - prev_export
+        
+        remaining_absorption = 0
+        
+        # -----------------------------------------------------
+        # RAMP UP
+        # -----------------------------------------------------
+        
+        if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
+        
+            required_absorption = (
+                raw_ramp - RAMP_LIMIT_MW_PER_MIN
+            )
+        
+            if curr_energy < target_soc_energy:
+        
+                available_charge_power = (
+                    (target_soc_energy - curr_energy) * 60
+                ) / eff
+        
+                remaining_power_capacity = max(0, p_cap - actual_bess)
+                ramp_charge = min(required_absorption, remaining_power_capacity, available_charge_power)
+        
+                curr_energy += (ramp_charge * eff) / 60
+        
+                actual_bess += ramp_charge
+        
+                remaining_absorption = (
+                    required_absorption - ramp_charge
+                )
+        
+            else:
+        
+                remaining_absorption = (
+                    required_absorption
+                )
+        
+        # -----------------------------------------------------
+        # RAMP DOWN
+        # -----------------------------------------------------
+        
+        elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN:
+        
+            required_discharge = abs(
+                raw_ramp + RAMP_LIMIT_MW_PER_MIN
+            )
+        
+            available_discharge_power = (
+                (curr_energy - e_min) * 60
+            ) * eff
+        
+            discharge = min(
+                required_discharge,
+                p_cap,
+                available_discharge_power
+            )
+        
+            curr_energy -= (
+                discharge / eff
+            ) / 60
+        
+            actual_bess -= discharge
+        
+        # -----------------------------------------------------
+        # EXPORT CALCULATION
+        # -----------------------------------------------------
+        
+        exp = raw_pv_capped
+        
+        # charging not supplied by clipping
+        exp -= max(
+            0,
+            actual_bess - clipped_power
+        )
+        
+        # discharge support
+        if actual_bess < 0:
+            exp += abs(actual_bess)
+        
+        # inverter clipping when SOC full
+        exp -= remaining_absorption
+        
+        t_curtail_ramp += remaining_absorption / 60
         grid_export[t], bess_pwr[t], soc_history[t] = exp, actual_bess, (curr_energy / e_cap) * 100
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
@@ -142,8 +244,48 @@ pv_signal = load_data()
 annual_dates = get_annual_dates()
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, ds, de, dc, db = run_sim(
-    pv_signal, pwr_cap, enr_cap, soc_min, soc_max, selected_day, init_soc_pct, eff_one_way)
+    pv_signal,
+    pwr_cap,
+    enr_cap,
+    soc_min,
+    soc_max,
+    selected_day,
+    init_soc_pct,
+    eff_one_way
+)
+daily_net_energy = []
+daily_dates = []
 
+for day in range(365):
+
+    start = day * 1440
+    end = (day + 1) * 1440
+
+    day_pv = pv_signal[start:end]
+
+    (
+        _,
+        day_bess,
+        _,
+        *_
+    ) = run_sim(
+        day_pv,
+        pwr_cap,
+        enr_cap,
+        soc_min,
+        soc_max,
+        0,
+        init_soc_pct,
+        eff_one_way
+    )
+
+    daily_net_energy.append(
+        np.sum(day_bess) / 60
+    )
+
+    daily_dates.append(
+        annual_dates[start]
+    )
 ideal_df = pd.DataFrame({
     "time": annual_dates,
     "energy": (ideal_bess) / 60.0
@@ -199,6 +341,33 @@ fig_ideal.update_layout(
     yaxis_title="Net BESS Energy (MWh)"
 )
 st.plotly_chart(fig_ideal, use_container_width=True)
+st.markdown(
+    '<div class="section-header">BESS Daily Net Energy for ±3 MW/min Ramp Compliance</div>',
+    unsafe_allow_html=True
+)
+
+fig_daily = go.Figure()
+
+fig_daily.add_trace(
+    go.Bar(
+        x=daily_dates,
+        y=daily_net_energy,
+        name='Net BESS Energy (MWh/day)'
+    )
+)
+
+fig_daily.update_layout(
+    template='plotly_dark',
+    height=450,
+    hovermode='x unified',
+    xaxis_title='Date',
+    yaxis_title='Net BESS Energy (MWh)'
+)
+
+st.plotly_chart(
+    fig_daily,
+    use_container_width=True
+)
 st.markdown(
     '<div class="section-header">Selected Event Day: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
