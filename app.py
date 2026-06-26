@@ -177,7 +177,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
             target = round((raw_ramp - RAMP_LIMIT_MW_PER_MIN),9)
         
         elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN:
-            target = round((raw_ramp + RAMP_LIMIT_MW_PER_MIN,9)
+            target = round((raw_ramp + RAMP_LIMIT_MW_PER_MIN),9)
         
         actual_bess = 0
         
