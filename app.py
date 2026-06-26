@@ -216,7 +216,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 p_cap,
                 available_pwr
             )
-            if (abs(target)- abs(actual_bess) > EPS:
+            if (abs(target)- abs(actual_bess)) > EPS:
                 discharge_limited += 1
         
             curr_energy += (
