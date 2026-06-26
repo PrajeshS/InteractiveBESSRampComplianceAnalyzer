@@ -300,9 +300,9 @@ c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_m
 c5, c6, c7, c8, c9 = st.columns(5)
 c5.metric("Charge-limited minutes:", charge_limited)
 c6.metric("Discharge-limited minutes:", discharge_limited)
-c7.metric("Minimum SOC:", np.min(soc))
-c8.metric("Maximum SOC:", np.max(soc))
-c9.metric("Final SOC:", soc[-1])
+c7.metric("Minimum SOC", f"{np.min(soc):.5f}%")
+c8.metric("Maximum SOC", f"{np.max(soc):.5f}%")
+c9.metric("Final SOC", f"{soc[-1]:.5f}%")
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c10, c11, c12, c13, c14 = st.columns(5)
