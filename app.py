@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import os
-RAMP_LIMIT_MW_PER_MIN = 3.000
+RAMP_LIMIT_MW_PER_MIN = 3
 st.set_page_config(page_title='BESS Ramp Compliance Simulator', layout='wide')
 
 # --- Professional Engineering CSS ---
