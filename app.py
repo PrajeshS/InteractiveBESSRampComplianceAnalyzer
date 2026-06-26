@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import os
 RAMP_LIMIT_MW_PER_MIN = 3
 EPS = 1e-6
-
+limited_no_violation = 0
 st.set_page_config(page_title='BESS Ramp Compliance Simulator', layout='wide')
 
 # --- Professional Engineering CSS ---
@@ -224,6 +224,11 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
             ) / 60
         
         exp = raw_pv_capped - actual_bess
+        limited = (
+        (target > 0 and target - actual_bess > EPS)
+        or
+        (target < 0 and abs(target) - abs(actual_bess) > EPS)
+        )
 
        
         grid_export[t], bess_pwr[t], soc_history[t] = exp, actual_bess, (curr_energy / e_cap) * 100
@@ -232,6 +237,8 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
         if pv > 0.5 and abs(exp - prev_export) >= (RAMP_LIMIT_MW_PER_MIN + EPS):
             violations += 1
+        if limited and not violation:
+        limited_no_violation += 1
 
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited
 
