@@ -4,6 +4,8 @@ import numpy as np
 import plotly.graph_objects as go
 import os
 RAMP_LIMIT_MW_PER_MIN = 3
+EPS = 1e-6
+
 st.set_page_config(page_title='BESS Ramp Compliance Simulator', layout='wide')
 
 # --- Professional Engineering CSS ---
@@ -197,7 +199,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 actual_bess * eff
             ) / 60
         
-            if round(target,9) > round(actual_bess,9):
+            if (target - actual_bess) > EPS:
                 charge_limited += 1
                 t_curtail_ramp += (
                     target - actual_bess
@@ -214,7 +216,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 p_cap,
                 available_pwr
             )
-            if round(abs(target),9) > round(abs(actual_bess),9):
+            if (abs(target)- abs(actual_bess) > EPS:
                 discharge_limited += 1
         
             curr_energy += (
@@ -228,7 +230,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
 
-        if pv > 0.5 and round(abs(exp - prev_export), 9) >= round(RAMP_LIMIT_MW_PER_MIN, 9):
+        if pv > 0.5 and abs(exp - prev_export) >= (RAMP_LIMIT_MW_PER_MIN + EPS):
             violations += 1
 
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited
