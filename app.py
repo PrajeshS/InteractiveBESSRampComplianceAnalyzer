@@ -4,7 +4,6 @@ import numpy as np
 import plotly.graph_objects as go
 import os
 RAMP_LIMIT_MW_PER_MIN = 3
-EPS = 1e-6
 
 st.set_page_config(page_title='BESS Ramp Compliance Simulator', layout='wide')
 
@@ -152,11 +151,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
     violations, day_mins = 0, 0
-    charge_limited = 0
-    discharge_limited = 0
-    limited_no_violation = 0
     t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh = 0, 0, 0, 0, 0
-
     e_min, e_max = s_min * e_cap, s_max * e_cap
 
 
@@ -200,11 +195,8 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 actual_bess * eff
             ) / 60
         
-            if (target - actual_bess) > EPS:
-                charge_limited += 1
-                t_curtail_ramp += (
-                    target - actual_bess
-                ) / 60
+            if round(target,9) > round(actual_bess,9):
+                t_curtail_ramp += (target - actual_bess) / 60
         
         elif target < 0:  # discharge
         
@@ -217,43 +209,27 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 p_cap,
                 available_pwr
             )
-            if (abs(target)- abs(actual_bess)) > EPS:
-                discharge_limited += 1
-        
             curr_energy += (
                 actual_bess / eff
             ) / 60
         
         exp = raw_pv_capped - actual_bess
-        limited = (
-        (target > 0 and target - actual_bess > EPS)
-        or
-        (target < 0 and abs(target) - abs(actual_bess) > EPS)
-        )
-        violation = (
-        pv > 0.5
-        and abs(exp - prev_export) >= (RAMP_LIMIT_MW_PER_MIN + EPS)
-        )
-
-       
         grid_export[t], bess_pwr[t], soc_history[t] = exp, actual_bess, (curr_energy / e_cap) * 100
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
 
         
-        if violation:
+        if pv > 0.5 and round(abs(exp - prev_export), 9) > round(RAMP_LIMIT_MW_PER_MIN, 9):
             violations += 1
-            
-        if limited and not violation:
-            limited_no_violation += 1
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited, limited_no_violation
+
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh
 
 pv_signal = load_data()
 annual_dates = get_annual_dates()
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charge_limited, discharge_limited, limited_no_violation = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh = run_sim(
     pv_signal,
     pwr_cap,
     enr_cap,
@@ -307,27 +283,20 @@ daily_ideal_energy = (
 )
 
 # --- UI Display ---
-c1, c2, c3, c4, a1 = st.columns(5)
+c1, c2, c3, c4, = st.columns(4)
 c1.metric('Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} minutes')
 c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
-a1.metric("Limited but Not Violating",f"{limited_no_violation:,} minutes")
 
-c5, c6, c7, c8, c9 = st.columns(5)
-c5.metric("Charge-limited minutes:", charge_limited)
-c6.metric("Discharge-limited minutes:", discharge_limited)
-c7.metric("Minimum SOC", f"{abs(np.min(soc)):.2f}%")
-c8.metric("Maximum SOC", f"{np.max(soc):.2f}%")
-c9.metric("Final SOC", f"{soc[-1]:.2f}%")
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
-c10, c11, c12, c13, c14 = st.columns(5)
-c10.metric('Solar Generation', f'{a_solar:,.0f} MWh')
-c11.metric('Grid Export', f'{a_export:,.0f} MWh')
-c12.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
-c13.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
-c14.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
+c5, c6, c7, c8, c9 = st.columns(5)
+c5.metric('Solar Generation', f'{a_solar:,.0f} MWh')
+c6.metric('Grid Export', f'{a_export:,.0f} MWh')
+c7.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
+c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
+c9.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
 
 st.markdown(
     '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
