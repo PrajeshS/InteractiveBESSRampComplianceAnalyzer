@@ -229,14 +229,20 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         or
         (target < 0 and abs(target) - abs(actual_bess) > EPS)
         )
+        violation = (
+        pv > 0.5
+        and abs(exp - prev_export) >= (RAMP_LIMIT_MW_PER_MIN + EPS)
+        )
 
        
         grid_export[t], bess_pwr[t], soc_history[t] = exp, actual_bess, (curr_energy / e_cap) * 100
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
 
-        if pv > 0.5 and abs(exp - prev_export) >= (RAMP_LIMIT_MW_PER_MIN + EPS):
+        
+        if violation:
             violations += 1
+            
         if limited and not violation:
             limited_no_violation += 1
 
