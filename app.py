@@ -291,7 +291,7 @@ daily_ideal_energy = (
 )
 
 # --- UI Display ---
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4 = st.columns(5)
 c1.metric('Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} minutes')
 c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
