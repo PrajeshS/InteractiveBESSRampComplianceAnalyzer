@@ -238,7 +238,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         if pv > 0.5 and abs(exp - prev_export) >= (RAMP_LIMIT_MW_PER_MIN + EPS):
             violations += 1
         if limited and not violation:
-        limited_no_violation += 1
+            limited_no_violation += 1
 
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited, limited_no_violation
 
@@ -305,7 +305,7 @@ c1.metric('Ramp Compliance', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} minutes')
 c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
-c5.metric("Limited but Not Violating",f"{limited_no_violation:,} minutes")
+a1.metric("Limited but Not Violating",f"{limited_no_violation:,} minutes")
 
 c5, c6, c7, c8, c9 = st.columns(5)
 c5.metric("Charge-limited minutes:", charge_limited)
