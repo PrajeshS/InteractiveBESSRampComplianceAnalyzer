@@ -150,6 +150,8 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
     violations, day_mins = 0, 0
+    charge_limited = 0
+    discharge_limited = 0
     t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh = 0, 0, 0, 0, 0
 
     e_min, e_max = s_min * e_cap, s_max * e_cap
@@ -196,7 +198,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
             ) / 60
         
             if target > actual_bess:
-        
+                charge_limited += 1
                 t_curtail_ramp += (
                     target - actual_bess
                 ) / 60
@@ -212,6 +214,8 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 p_cap,
                 available_pwr
             )
+            if abs(target) > abs(actual_bess):
+            discharge_limited += 1
         
             curr_energy += (
                 actual_bess / eff
@@ -226,13 +230,13 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
         if pv > 0.5 and abs(exp - prev_export) > (RAMP_LIMIT_MW_PER_MIN): violations += 1
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited
 
 pv_signal = load_data()
 annual_dates = get_annual_dates()
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charge_limited, discharge_limited = run_sim(
     pv_signal,
     pwr_cap,
     enr_cap,
@@ -241,6 +245,11 @@ export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, 
     init_soc_pct,
     eff_one_way
 )
+st.write("Charge-limited minutes:", charge_limited)
+st.write("Discharge-limited minutes:", discharge_limited)
+st.write("Minimum SOC:", np.min(soc))
+st.write("Maximum SOC:", np.max(soc))
+st.write("Final SOC:", soc[-1])
 daily_net_energy = []
 daily_dates = []
 
