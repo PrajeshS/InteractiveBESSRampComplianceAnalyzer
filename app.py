@@ -228,7 +228,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
 
-        if pv > 0.5 and abs(exp - prev_export) > (RAMP_LIMIT_MW_PER_MIN)
+        if pv > 0.5 and abs(exp - prev_export) > (RAMP_LIMIT_MW_PER_MIN):
             print(f"PV={pv:.2f}, PrevExp={prev_export:.6f}, Exp={exp:.6f}, Ramp={abs(exp-prev_export):.12f}, Target={target:.6f}, BESS={actual_bess:.6f}")
             violations += 1
 
