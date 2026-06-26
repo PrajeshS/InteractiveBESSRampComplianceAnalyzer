@@ -229,7 +229,6 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_bess_mwh += abs(actual_bess) / 60
 
         if pv > 0.5 and round(abs(exp - prev_export), 3) > round(RAMP_LIMIT_MW_PER_MIN, 3):
-            st.write(f"PV={pv:.2f}, PrevExp={prev_export:.6f}, Exp={exp:.6f}, Ramp={abs(exp-prev_export):.25f}")
             violations += 1
 
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited
@@ -247,11 +246,7 @@ export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, 
     init_soc_pct,
     eff_one_way
 )
-st.write("Charge-limited minutes:", charge_limited)
-st.write("Discharge-limited minutes:", discharge_limited)
-st.write("Minimum SOC:", np.min(soc))
-st.write("Maximum SOC:", np.max(soc))
-st.write("Final SOC:", soc[-1])
+
 daily_net_energy = []
 daily_dates = []
 
@@ -302,13 +297,20 @@ c2.metric('Annual Violations', f'{v_count:,} minutes')
 c3.metric('Total BESS Effort', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.1f}')
 
-st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c5, c6, c7, c8, c9 = st.columns(5)
-c5.metric('Solar Generation', f'{a_solar:,.0f} MWh')
-c6.metric('Grid Export', f'{a_export:,.0f} MWh')
-c7.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
-c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
-c9.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
+c5.metric("Charge-limited minutes:", charge_limited)
+c6.metric("Discharge-limited minutes:", discharge_limited)
+c7.metric("Minimum SOC:", np.min(soc))
+c8.metric("Maximum SOC:", np.max(soc))
+c9.metric("Final SOC:", soc[-1])
+
+st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
+c10, c11, c12, c13, c14 = st.columns(5)
+c10.metric('Solar Generation', f'{a_solar:,.0f} MWh')
+c11.metric('Grid Export', f'{a_export:,.0f} MWh')
+c12.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
+c13.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
+c14.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
 
 st.markdown(
     '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
