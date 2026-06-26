@@ -300,7 +300,7 @@ c8.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c9.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.1f}%')
 
 st.markdown(
-    '<div class="section-header">Ideal BESS Daily Net Energy Required for ±3 MW/min Ramp Compliance</div>',
+    '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
 )
 
