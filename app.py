@@ -229,7 +229,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_bess_mwh += abs(actual_bess) / 60
 
         if pv > 0.5 and abs(exp - prev_export) > (RAMP_LIMIT_MW_PER_MIN):
-            st.write(f"PV={pv:.2f}, PrevExp={prev_export:.6f}, Exp={exp:.6f}, Ramp={abs(exp-prev_export):.12f}")
+            st.write(f"PV={pv:.2f}, PrevExp={prev_export:.6f}, Exp={exp:.6f}, Ramp={abs(exp-prev_export):.25f}")
             violations += 1
 
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charge_limited, discharge_limited
