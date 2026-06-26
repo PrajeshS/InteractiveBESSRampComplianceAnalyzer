@@ -323,7 +323,7 @@ fig_ideal.update_layout(
 )
 st.plotly_chart(fig_ideal, use_container_width=True)
 st.markdown(
-    '<div class="section-header">Daily Minimum Initial Stored Energy Required</div>',
+    '<div class="section-header">Daily Minimum Initial Stored Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
 )
 
@@ -350,7 +350,7 @@ st.plotly_chart(
     use_container_width=True
 )
 st.markdown(
-    '<div class="section-header">BESS Daily Net Energy for ±3 MW/min Ramp Compliance</div>',
+    '<div class="section-header">Daily BESS Net Energy for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
 )
 
