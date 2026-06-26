@@ -174,10 +174,10 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         target = 0
         
         if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
-            target = round((raw_ramp - RAMP_LIMIT_MW_PER_MIN),9)
+            target = (raw_ramp - RAMP_LIMIT_MW_PER_MIN)
         
         elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN:
-            target = round((raw_ramp + RAMP_LIMIT_MW_PER_MIN),9)
+            target = (raw_ramp + RAMP_LIMIT_MW_PER_MIN)
         
         actual_bess = 0
         
@@ -197,7 +197,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 actual_bess * eff
             ) / 60
         
-            if target > round(actual_bess,9):
+            if round(target,9) > round(actual_bess,9):
                 charge_limited += 1
                 t_curtail_ramp += (
                     target - actual_bess
@@ -214,7 +214,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 p_cap,
                 available_pwr
             )
-            if abs(target) > round(abs(actual_bess),9):
+            if round(abs(target),9) > round(abs(actual_bess),9):
                 discharge_limited += 1
         
             curr_energy += (
