@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import os
-RAMP_LIMIT_MW_PER_MIN = 3.0
+RAMP_LIMIT_MW_PER_MIN = 3.000
 st.set_page_config(page_title='BESS Ramp Compliance Simulator', layout='wide')
 
 # --- Professional Engineering CSS ---
@@ -228,7 +228,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
 
-        if pv > 0.5 and abs(exp - prev_export) > (RAMP_LIMIT_MW_PER_MIN):
+        if pv > 0.5 and round(abs(exp - prev_export), 3) > (RAMP_LIMIT_MW_PER_MIN):
             st.write(f"PV={pv:.2f}, PrevExp={prev_export:.6f}, Exp={exp:.6f}, Ramp={abs(exp-prev_export):.25f}")
             violations += 1
 
