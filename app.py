@@ -96,7 +96,7 @@ def calculate_ideal_bess(pv_data):
 
     return ideal_export, ideal_bess
 @st.cache_data
-def calculate_required_initial_energy(pv_data, p_cap):
+def calculate_required_initial_energy(pv_data, p_cap, annual_dates):
 
     required_energy = []
     energy_dates = []
