@@ -409,6 +409,8 @@ fig_ramp_hist.add_trace(
     go.Bar(
         x=ramp_labels,
         y=ramp_counts,
+        text=ramp_counts,
+        textposition='outside',
         name='Frequency'
     )
 )
