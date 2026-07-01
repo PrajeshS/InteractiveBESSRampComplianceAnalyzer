@@ -411,6 +411,7 @@ fig_hist.update_layout(
     xaxis_title='Grid Export Power Range (MW)',
     yaxis_title='Frequency (Minutes)',
     showlegend=False
+    bargap=0
 )
 
 st.plotly_chart(
