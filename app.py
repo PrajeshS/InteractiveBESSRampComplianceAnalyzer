@@ -375,8 +375,8 @@ st.plotly_chart(
     fig_daily,
     use_container_width=True
 )
-# --- NEW: Export Power Distribution Histogram ---
-st.markdown('<div class="section-header">Power Export Distribution (> 0.5 MW)</div>', unsafe_allow_html=True)
+
+
 export_active = export[
     (export >= 0.5) &
     (export <= 100.0)
