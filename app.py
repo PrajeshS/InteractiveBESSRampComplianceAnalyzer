@@ -377,23 +377,40 @@ st.plotly_chart(
 )
 # --- NEW: Export Power Distribution Histogram ---
 st.markdown('<div class="section-header">Power Export Distribution (> 0.5 MW)</div>', unsafe_allow_html=True)
-filtered_export = export[pv_signal > 0.5]
+export_active = export[export >= 0.5]
+bins = np.arange(0.5, 105, 5)
+counts, edges = np.histogram(export_active, bins=bins)
+labels = [
+    f"{edges[i]:.1f}-{edges[i+1]:.0f}"
+    for i in range(len(edges)-1)
+]
+st.markdown(
+    '<div class="section-header">Grid Export Power Histogram After BESS Action</div>',
+    unsafe_allow_html=True
+)
 
-if len(filtered_export) > 0:
-    fig_hist = go.Figure(data=[go.Histogram(
-        x=filtered_export, 
-        xbins=dict(start=0.5, end=max(filtered_export)+5, size=5), 
-        marker_color='#58a6ff'
-    )])
-    
-    fig_hist.update_layout(
-        template='plotly_dark', 
-        height=450, 
-        xaxis_title='Net Export Power (MW)', 
-        yaxis_title='Frequency (Minutes)', 
-        bargap=0.1
+fig_hist = go.Figure()
+
+fig_hist.add_trace(
+    go.Bar(
+        x=labels,
+        y=counts,
+        name='Frequency'
     )
-    st.plotly_chart(fig_hist, use_container_width=True)
+)
+
+fig_hist.update_layout(
+    template='plotly_dark',
+    height=450,
+    xaxis_title='Grid Export Power Range (MW)',
+    yaxis_title='Frequency (Minutes)',
+    showlegend=False
+)
+
+st.plotly_chart(
+    fig_hist,
+    use_container_width=True
+)
 st.markdown(
     '<div class="section-header">Annual: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
