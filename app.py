@@ -410,7 +410,7 @@ fig_hist.update_layout(
     height=450,
     xaxis_title='Grid Export Power Range (MW)',
     yaxis_title='Frequency (Minutes)',
-    showlegend=False
+    showlegend=False,
     bargap=0
 )
 
