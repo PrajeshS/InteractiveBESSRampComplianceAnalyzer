@@ -389,7 +389,7 @@ grid_ramps_active = grid_ramps[valid_mask]
 
 max_ramp = np.ceil(np.max(grid_ramps_active) / 5) * 5
 
-ramp_bins = [0.5, 3, 5] + list(np.arange(10, max_ramp + 5, 5))
+ramp_bins = [0, 3, 5] + list(np.arange(10, max_ramp + 5, 5))
 ramp_labels = [
     f"{ramp_bins[i]}-{ramp_bins[i+1]}"
     for i in range(len(ramp_bins)-1)
