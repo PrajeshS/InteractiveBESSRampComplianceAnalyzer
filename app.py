@@ -376,53 +376,53 @@ st.plotly_chart(
     use_container_width=True
 )
 
+# ------------------------------------------
+# Grid Ramp Rate Distribution After BESS
+# ------------------------------------------
 
-#export_active = export[
-    #(export > 0.5) &
-    #(export <= 100.0)
-#]
-export_active = export[
-    (pv_signal > 0.5) &
-    (pv_signal <= 100)
+grid_ramps = np.abs(np.diff(export))
+
+# Only consider daytime operating periods
+valid_mask = pv_signal[1:] > 0.5
+
+ramp_bins = [0.5, 3, 5] + list(np.arange(10, 55, 5))
+ramp_labels = [
+    f"{bins[i]}-{bins[i+1]}"
+    for i in range(len(bins)-1)
 ]
-bins = np.concatenate((
-    [0.5],
-    np.arange(5, 105, 5)
-))
-counts, edges = np.histogram(export_active, bins=bins)
-labels = ['0.5-5']
-
-for start in range(5, 100, 5):
-    labels.append(f'{start}-{start+5}')
+ramp_counts, _ = np.histogram(
+    grid_ramps_active,
+    bins=ramp_bins
+)
 st.markdown(
-    '<div class="section-header">Grid Export Power Histogram After BESS Action</div>',
+    '<div class="section-header">Grid Ramp Rate Distribution After BESS Action</div>',
     unsafe_allow_html=True
 )
 
-fig_hist = go.Figure()
+fig_ramp_hist = go.Figure()
 
-fig_hist.add_trace(
+fig_ramp_hist.add_trace(
     go.Bar(
-        x=labels,
-        y=counts,
-        marker_line_width=0.1,
+        x=ramp_labels,
+        y=ramp_counts,
         name='Frequency'
     )
 )
 
-fig_hist.update_layout(
+fig_ramp_hist.update_layout(
     template='plotly_dark',
     height=450,
-    xaxis_title='Grid Export Power Range (MW)',
-    yaxis_title='Frequency (Minutes)',
+    bargap=0,
     showlegend=False,
-    bargap=0
+    xaxis_title='Grid Ramp Rate Range (MW/min)',
+    yaxis_title='Frequency (Minutes)'
 )
 
 st.plotly_chart(
-    fig_hist,
+    fig_ramp_hist,
     use_container_width=True
 )
+
 st.markdown(
     '<div class="section-header">Annual: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
