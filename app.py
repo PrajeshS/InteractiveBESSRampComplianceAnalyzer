@@ -388,7 +388,7 @@ valid_mask = pv_signal[1:] > 0.5
 ramp_bins = [0.5, 3, 5] + list(np.arange(10, 55, 5))
 ramp_labels = [
     f"{bins[i]}-{bins[i+1]}"
-    for i in range(len(bins)-1)
+    for i in range(len(ramp_bins)-1)
 ]
 ramp_counts, _ = np.histogram(
     grid_ramps_active,
