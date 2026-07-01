@@ -377,13 +377,19 @@ st.plotly_chart(
 )
 # --- NEW: Export Power Distribution Histogram ---
 st.markdown('<div class="section-header">Power Export Distribution (> 0.5 MW)</div>', unsafe_allow_html=True)
-export_active = export[export >= 0.5]
-bins = np.arange(0.5, 105, 5)
-counts, edges = np.histogram(export_active, bins=bins)
-labels = [
-    f"{edges[i]:.1f}-{edges[i+1]:.0f}"
-    for i in range(len(edges)-1)
+export_active = export[
+    (export >= 0.5) &
+    (export <= 100.0)
 ]
+bins = np.concatenate((
+    [0.5],
+    np.arange(5, 105, 5)
+))
+counts, edges = np.histogram(export_active, bins=bins)
+labels = ['0.5-5']
+
+for start in range(5, 100, 5):
+    labels.append(f'{start}-{start+5}')
 st.markdown(
     '<div class="section-header">Grid Export Power Histogram After BESS Action</div>',
     unsafe_allow_html=True
