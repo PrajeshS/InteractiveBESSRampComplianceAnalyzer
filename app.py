@@ -378,8 +378,8 @@ st.plotly_chart(
 
 
 export_active = export[
-    (export >= 0.5) &
-    (export <= 100.0)
+    (export > 0.5) &
+    (export < 100.0)
 ]
 bins = np.concatenate((
     [0.5],
