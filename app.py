@@ -375,6 +375,25 @@ st.plotly_chart(
     fig_daily,
     use_container_width=True
 )
+# --- NEW: Export Power Distribution Histogram ---
+st.markdown('<div class="section-header">Power Export Distribution (> 0.5 MW)</div>', unsafe_allow_html=True)
+filtered_export = export[pv_signal > 0.5]
+
+if len(filtered_export) > 0:
+    fig_hist = go.Figure(data=[go.Histogram(
+        x=filtered_export, 
+        xbins=dict(start=0.5, end=max(filtered_export)+5, size=5), 
+        marker_color='#58a6ff'
+    )])
+    
+    fig_hist.update_layout(
+        template='plotly_dark', 
+        height=450, 
+        xaxis_title='Net Export Power (MW)', 
+        yaxis_title='Frequency (Minutes)', 
+        bargap=0.1
+    )
+    st.plotly_chart(fig_hist, use_container_width=True)
 st.markdown(
     '<div class="section-header">Annual: Solar, BESS Dispatch, and SOC Response for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
