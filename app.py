@@ -391,7 +391,7 @@ ramp_labels = [
     for i in range(len(ramp_bins)-1)
 ]
 ramp_counts, _ = np.histogram(
-    grid_ramps_active,
+    grid_ramps,
     bins=ramp_bins
 )
 st.markdown(
