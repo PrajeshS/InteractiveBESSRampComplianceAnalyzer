@@ -401,7 +401,7 @@ fig_hist.add_trace(
     go.Bar(
         x=labels,
         y=counts,
-        marker_line_width=0,
+        marker_line_width=0.1,
         name='Frequency'
     )
 )
