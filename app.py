@@ -388,7 +388,7 @@ grid_ramps_active = np.round(grid_ramps_active, 3)
 # Determine maximum ramp for automatic bins
 max_ramp = np.ceil(np.max(grid_ramps_active) / 5) * 5
 # Create bins
-ramp_bins = [0, 3, 5] + list(np.arange(10, max_ramp + 5, 5))
+ramp_bins = [0, 3.0, 5.0] + list(np.arange(10, max_ramp + 5, 5))
 # Move exact bin-edge values into the lower bin
 edges = np.array(ramp_bins[1:-1])
 
