@@ -382,7 +382,7 @@ st.plotly_chart(
 # Only consider daytime operating periods
 grid_ramps = np.abs(np.diff(export))
 valid_mask = pv_signal[1:] > 0.5
-grid_ramps_active = grid_ramps_active[valid_mask]
+grid_ramps_active = grid_ramps[valid_mask]
 # Round ramps to 3 decimal places
 grid_ramps_active = np.round(grid_ramps_active, 3)
 # Determine maximum ramp for automatic bins
