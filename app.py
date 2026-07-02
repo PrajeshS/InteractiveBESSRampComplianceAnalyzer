@@ -195,7 +195,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 actual_bess * eff
             ) / 60
         
-            if round(target,9) > round(actual_bess,9):
+            if round(target,3) > round(actual_bess,3):
                 t_curtail_ramp += (target - actual_bess) / 60
         
         elif target < 0:  # discharge
@@ -219,7 +219,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_bess_mwh += abs(actual_bess) / 60
 
         
-        if pv > 0.5 and round(abs(exp - prev_export), 9) > round(RAMP_LIMIT_MW_PER_MIN, 9):
+        if pv > 0.5 and round(abs(exp - prev_export), 3) > round(RAMP_LIMIT_MW_PER_MIN, 3):
             violations += 1
 
 
@@ -379,21 +379,33 @@ st.plotly_chart(
 # ------------------------------------------
 # Grid Ramp Rate Distribution After BESS
 # ------------------------------------------
-
-grid_ramps = np.abs(np.diff(export))
-
 # Only consider daytime operating periods
 valid_mask = pv_signal[1:] > 0.5
 
 grid_ramps_active = grid_ramps[valid_mask]
 
+# Round ramps to 3 decimal places
+grid_ramps_active = np.round(grid_ramps_active, 3)
+
+# Determine maximum ramp for automatic bins
 max_ramp = np.ceil(np.max(grid_ramps_active) / 5) * 5
 
+# Create bins
 ramp_bins = [0, 3, 5] + list(np.arange(10, max_ramp + 5, 5))
+
+# Move exact bin-edge values into the lower bin
+edges = np.array(ramp_bins[1:-1])
+
+for edge in edges:
+    grid_ramps_active[np.isclose(grid_ramps_active, edge, atol=5e-4)] -= 1e-9
+
+# Labels
 ramp_labels = [
     f"{ramp_bins[i]}-{ramp_bins[i+1]}"
     for i in range(len(ramp_bins)-1)
 ]
+
+# Histogram
 ramp_counts, _ = np.histogram(
     grid_ramps_active,
     bins=ramp_bins
