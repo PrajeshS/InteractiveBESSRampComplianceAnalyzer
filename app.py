@@ -396,9 +396,9 @@ for edge in edges:
     grid_ramps_active[np.isclose(grid_ramps_active, edge, atol=5e-4)] -= 1e-9
 
 # Labels
-ramp_labels = [
-    f"{ramp_bins[i]}-{ramp_bins[i+1]}"
-    for i in range(len(ramp_bins)-1)
+ramp_labels = ["≤3"] + [
+    f">{ramp_bins[i]}-{ramp_bins[i+1]}"
+    for i in range(1, len(ramp_bins)-1)
 ]
 
 # Histogram
