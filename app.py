@@ -238,13 +238,13 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 discharging_minutes += 1
 
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins
 
 pv_signal = load_data()
 annual_dates = get_annual_dates()
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins = run_sim(
 pv_signal,
 pwr_cap,
 enr_cap,
@@ -315,13 +315,13 @@ c5.metric('Charging Minutes',f'{charging_minutes:,} minutes')
 c6.metric('Discharging Minutes',f'{discharging_minutes:,} minutes')
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
-c7, c8, c9, c10, c11 = st.columns(5)
+c7, c8, c9, c10, c11, c12 = st.columns(6)
 c7.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c8.metric('Grid Export', f'{a_export:,.0f} MWh')
 c9.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c10.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c11.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
-
+c12.metric('Day min', f'{day_mins} minutes')
 st.markdown(
     '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
