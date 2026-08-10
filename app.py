@@ -255,6 +255,7 @@ eff_one_way
 )
 
 daily_net_energy = []
+daily_energy_swing = []
 daily_dates = []
 
 for day in range(365):
