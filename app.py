@@ -282,7 +282,14 @@ for day in range(365):
     daily_net_energy.append(
         np.sum(day_bess) / 60
     )
+    # Cumulative BESS energy movement during the day
+    cumulative_day_energy = np.cumsum(day_bess / 60.0)
 
+    # Daily maximum-to-minimum energy swing
+    daily_energy_swing.append(
+        np.max(cumulative_day_energy)
+        - np.min(cumulative_day_energy)
+    )
     daily_dates.append(
         annual_dates[start]
     )
@@ -391,7 +398,84 @@ st.plotly_chart(
     fig_daily,
     use_container_width=True
 )
+# ------------------------------------------
+# Daily BESS Energy Swing Distribution
+# ------------------------------------------
 
+# Convert to NumPy array
+daily_energy_swing = np.array(daily_energy_swing)
+
+# Create 5 MWh bins starting at 20 MWh
+# First bin: <=20 MWh
+# Then: >20-25, >25-30, etc.
+
+max_energy_swing = np.max(daily_energy_swing)
+
+if max_energy_swing <= 20:
+    energy_bins = [0, 20]
+else:
+    max_bin = np.ceil(max_energy_swing / 5) * 5
+    energy_bins = [0, 20] + list(
+        np.arange(25, max_bin + 5, 5)
+    )
+
+# Make sure the final edge covers the maximum value
+if energy_bins[-1] <= max_energy_swing:
+    energy_bins.append(energy_bins[-1] + 5)
+
+# Histogram counts
+energy_swing_counts, _ = np.histogram(
+    daily_energy_swing,
+    bins=energy_bins
+)
+
+# Create labels
+energy_swing_labels = []
+
+for i in range(len(energy_bins) - 1):
+
+    lower = energy_bins[i]
+    upper = energy_bins[i + 1]
+
+    if i == 0:
+        energy_swing_labels.append(
+            f"≤{upper:.0f}"
+        )
+    else:
+        energy_swing_labels.append(
+            f">{lower:.0f}-{upper:.0f}"
+        )
+
+st.markdown(
+    '<div class="section-header">Daily BESS Energy Swing Distribution (Max - Min)</div>',
+    unsafe_allow_html=True
+)
+
+fig_energy_hist = go.Figure()
+
+fig_energy_hist.add_trace(
+    go.Bar(
+        x=energy_swing_labels,
+        y=energy_swing_counts,
+        text=energy_swing_counts,
+        textposition='outside',
+        name='Number of Days'
+    )
+)
+
+fig_energy_hist.update_layout(
+    template='plotly_dark',
+    height=450,
+    bargap=0,
+    showlegend=False,
+    xaxis_title='Daily BESS Energy Swing (MWh)',
+    yaxis_title='Number of Days'
+)
+
+st.plotly_chart(
+    fig_energy_hist,
+    use_container_width=True
+)
 # ------------------------------------------
 # Grid Ramp Rate Distribution After BESS
 # ------------------------------------------
