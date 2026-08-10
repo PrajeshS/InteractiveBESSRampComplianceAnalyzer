@@ -406,19 +406,20 @@ st.plotly_chart(
 # Convert to NumPy array
 daily_energy_swing = np.array(daily_energy_swing)
 
-# Create 5 MWh bins starting at 20 MWh
-# First bin: <=20 MWh
-# Then: >20-25, >25-30, etc.
+# Create 5 MWh bins
+# First bin: <=5 MWh
+# Then: >5-10, >10-15, >15-20, etc.
 
 max_energy_swing = np.max(daily_energy_swing)
 
-if max_energy_swing <= 20:
-    energy_bins = [0, 20]
-else:
-    max_bin = np.ceil(max_energy_swing / 5) * 5
-    energy_bins = [0, 20] + list(
-        np.arange(25, max_bin + 5, 5)
-    )
+max_bin = max(
+    5,
+    np.ceil(max_energy_swing / 5) * 5
+)
+
+energy_bins = list(
+    np.arange(0, max_bin + 5, 5)
+)
 
 # Make sure the final edge covers the maximum value
 if energy_bins[-1] <= max_energy_swing:
