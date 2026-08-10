@@ -238,8 +238,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 discharging_minutes += 1
 
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes,
-    discharging_minutes
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes
 
 pv_signal = load_data()
 annual_dates = get_annual_dates()
@@ -252,7 +251,8 @@ enr_cap,
 soc_min,
 soc_max,
 init_soc_pct,
-eff_one_way)
+eff_one_way
+)
 
 daily_net_energy = []
 daily_dates = []
