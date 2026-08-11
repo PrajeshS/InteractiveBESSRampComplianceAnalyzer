@@ -370,10 +370,40 @@ soc_max,
 init_soc_pct,
 eff_one_way
 )
+daily_net_energy = []
+daily_dates = []
 daily_energy_dates, daily_max_energy = calculate_daily_max_energy_power_only(
     pv_signal,
     pwr_cap
 )
+for day in range(365):
+
+    start = day * 1440
+    end = (day + 1) * 1440
+
+    day_pv = pv_signal[start:end]
+
+    (
+        _,
+        day_bess,
+        _,
+        *_
+    ) = run_sim(
+        day_pv,
+        pwr_cap,
+        enr_cap,
+        soc_min,
+        soc_max,
+        init_soc_pct,
+        eff_one_way
+    )
+
+    daily_net_energy.append(
+        np.sum(day_bess) / 60
+    )
+    daily_dates.append(
+        annual_dates[start]
+    )
 
 ideal_df = pd.DataFrame({
     "time": annual_dates,
