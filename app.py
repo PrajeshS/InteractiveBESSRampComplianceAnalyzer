@@ -269,6 +269,93 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes
 
+@st.cache_data
+def calculate_daily_max_energy_power_only(pv_data, p_cap):
+
+    daily_max_energy = []
+    daily_dates = []
+
+    for day in range(365):
+
+        start = day * 1440
+        end = (day + 1) * 1440
+
+        day_pv = pv_data[start:end]
+
+        # --------------------------------------------------
+        # Each day starts at ZERO cumulative energy movement
+        # --------------------------------------------------
+        cumulative_energy = 0.0
+        max_absolute_energy = 0.0
+
+        # Start with the first day's solar export
+        previous_export = min(day_pv[0], 100.0)
+
+        for t in range(1, len(day_pv)):
+
+            pv = day_pv[t]
+
+            # 100 MW plant export limit
+            pv_capped = min(pv, 100.0)
+
+            # Natural ramp relative to previous grid export
+            raw_ramp = pv_capped - previous_export
+
+            # --------------------------------------------------
+            # BESS power required to enforce ±3 MW/min
+            # --------------------------------------------------
+            if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
+
+                required_bess = (
+                    raw_ramp - RAMP_LIMIT_MW_PER_MIN
+                )
+
+            elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN:
+
+                required_bess = (
+                    raw_ramp + RAMP_LIMIT_MW_PER_MIN
+                )
+
+            else:
+
+                required_bess = 0.0
+
+            # --------------------------------------------------
+            # Apply ONLY the BESS power limit
+            # --------------------------------------------------
+            actual_bess = np.clip(
+                required_bess,
+                -p_cap,
+                p_cap
+            )
+
+            # --------------------------------------------------
+            # Track cumulative energy movement
+            #
+            # MW × 1/60 hour = MWh
+            # --------------------------------------------------
+            cumulative_energy += actual_bess / 60.0
+
+            # Maximum absolute energy displacement
+            max_absolute_energy = max(
+                max_absolute_energy,
+                abs(cumulative_energy)
+            )
+
+            # --------------------------------------------------
+            # Final grid export becomes the previous export
+            # --------------------------------------------------
+            final_export = pv_capped - actual_bess
+
+            previous_export = final_export
+
+        daily_max_energy.append(max_absolute_energy)
+
+        daily_dates.append(
+            annual_dates[start]
+        )
+
+    return daily_dates, daily_max_energy
 pv_signal = load_data()
 annual_dates = get_annual_dates()
 no_bess_compliant_minutes, daytime_minutes = calculate_no_bess_compliance(pv_signal)
@@ -283,44 +370,11 @@ soc_max,
 init_soc_pct,
 eff_one_way
 )
+daily_energy_dates, daily_max_energy = calculate_daily_max_energy_power_only(
+    pv_signal,
+    pwr_cap
+)
 
-daily_net_energy = []
-daily_max_swing = []
-daily_dates = []
-
-for day in range(365):
-
-    start = day * 1440
-    end = (day + 1) * 1440
-
-    day_pv = pv_signal[start:end]
-
-    (
-        _,
-        day_bess,
-        _,
-        *_
-    ) = run_sim(
-        day_pv,
-        pwr_cap,
-        enr_cap,
-        soc_min,
-        soc_max,
-        init_soc_pct,
-        eff_one_way
-    )
-
-    daily_net_energy.append(
-        np.sum(day_bess) / 60
-    )
-    # Cumulative BESS energy movement during the day
-    cumulative_day_energy = np.cumsum(day_bess / 60.0)
-
-    # Daily maximum energy 
-    daily_max_swing.append(np.max(np.abs(cumulative_day_energy)))
-    daily_dates.append(
-        annual_dates[start]
-    )
 ideal_df = pd.DataFrame({
     "time": annual_dates,
     "energy": (ideal_bess) / 60.0
@@ -437,39 +491,49 @@ st.plotly_chart(
     use_container_width=True
 )
 # ------------------------------------------
-# Daily BESS Energy Swing Distribution
+# Daily Maximum BESS Energy Movement
+# Power-Limit-Only Calculation
 # ------------------------------------------
 
-# Convert to NumPy array
-daily_max_swing = np.array(daily_max_swing)
+daily_max_energy = np.array(daily_max_energy)
 
+# --------------------------------------------------
 # Create 5 MWh bins
-# First bin: <=5 MWh
-# Then: >5-10, >10-15, >15-20, etc.
+#
+# ≤5
+# >5-10
+# >10-15
+# >15-20
+# etc.
+# --------------------------------------------------
 
-max_energy_swing = np.max(daily_max_swing)
+max_energy = np.max(daily_max_energy)
 
 max_bin = max(
     5,
-    np.ceil(max_energy_swing / 5) * 5
+    np.ceil(max_energy / 5) * 5
 )
 
-energy_bins = list(
-    np.arange(0, max_bin + 5, 5)
+energy_bins = np.arange(
+    0,
+    max_bin + 5,
+    5
 )
 
-# Make sure the final edge covers the maximum value
-if energy_bins[-1] <= max_energy_swing:
-    energy_bins.append(energy_bins[-1] + 5)
+# --------------------------------------------------
+# Calculate frequency
+# --------------------------------------------------
 
-# Histogram counts
-energy_swing_counts, _ = np.histogram(
-    daily_max_swing,
+energy_counts, _ = np.histogram(
+    daily_max_energy,
     bins=energy_bins
 )
 
+# --------------------------------------------------
 # Create labels
-energy_swing_labels = []
+# --------------------------------------------------
+
+energy_labels = []
 
 for i in range(len(energy_bins) - 1):
 
@@ -477,13 +541,53 @@ for i in range(len(energy_bins) - 1):
     upper = energy_bins[i + 1]
 
     if i == 0:
-        energy_swing_labels.append(
+
+        energy_labels.append(
             f"≤{upper:.0f}"
         )
+
     else:
-        energy_swing_labels.append(
+
+        energy_labels.append(
             f">{lower:.0f}-{upper:.0f}"
         )
+
+# --------------------------------------------------
+# Plot histogram
+# --------------------------------------------------
+
+st.markdown(
+    '<div class="section-header">'
+    'Daily Maximum BESS Energy Movement Distribution'
+    '</div>',
+    unsafe_allow_html=True
+)
+
+fig_energy_hist = go.Figure()
+
+fig_energy_hist.add_trace(
+    go.Bar(
+        x=energy_labels,
+        y=energy_counts,
+        text=energy_counts,
+        textposition='outside',
+        name='Number of Days'
+    )
+)
+
+fig_energy_hist.update_layout(
+    template='plotly_dark',
+    height=450,
+    bargap=0,
+    showlegend=False,
+    xaxis_title='Maximum Absolute Daily Energy Movement (MWh)',
+    yaxis_title='Frequency (Days)'
+)
+
+st.plotly_chart(
+    fig_energy_hist,
+    use_container_width=True
+)
 
 st.markdown(
     '<div class="section-header">Daily Maximum BESS Energy Movement Distribution</div>',
