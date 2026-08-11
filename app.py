@@ -283,26 +283,28 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
         day_pv = pv_data[start:end]
 
         # --------------------------------------------------
-        # Each day starts at ZERO cumulative energy movement
+        # Each day is completely independent
+        # BESS starts at 0 MWh
         # --------------------------------------------------
         cumulative_energy = 0.0
         max_absolute_energy = 0.0
 
-        # Start with the first day's solar export
+        # First minute establishes the initial grid export
         previous_export = min(day_pv[0], 100.0)
 
         for t in range(1, len(day_pv)):
 
-            pv = day_pv[t]
-
             # 100 MW plant export limit
-            pv_capped = min(pv, 100.0)
+            pv_capped = min(day_pv[t], 100.0)
 
-            # Natural ramp relative to previous grid export
+            # Natural solar ramp relative to previous export
             raw_ramp = pv_capped - previous_export
 
             # --------------------------------------------------
-            # BESS power required to enforce ±3 MW/min
+            # BESS power required to maintain ±3 MW/min
+            #
+            # Positive = charging
+            # Negative = discharging
             # --------------------------------------------------
             if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
 
@@ -322,6 +324,12 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
 
             # --------------------------------------------------
             # Apply ONLY the BESS power limit
+            #
+            # No:
+            #   - energy capacity
+            #   - SOC limit
+            #   - efficiency
+            #   - initial SOC
             # --------------------------------------------------
             actual_bess = np.clip(
                 required_bess,
@@ -330,24 +338,23 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
             )
 
             # --------------------------------------------------
-            # Track cumulative energy movement
-            #
-            # MW × 1/60 hour = MWh
+            # Convert MW for one minute into MWh
             # --------------------------------------------------
             cumulative_energy += actual_bess / 60.0
 
-            # Maximum absolute energy displacement
+            # Track maximum absolute cumulative movement
             max_absolute_energy = max(
                 max_absolute_energy,
                 abs(cumulative_energy)
             )
 
             # --------------------------------------------------
-            # Final grid export becomes the previous export
+            # Resulting grid export becomes reference
+            # for the next minute
             # --------------------------------------------------
-            final_export = pv_capped - actual_bess
-
-            previous_export = final_export
+            previous_export = (
+                pv_capped - actual_bess
+            )
 
         daily_max_energy.append(max_absolute_energy)
 
@@ -618,7 +625,6 @@ st.plotly_chart(
     fig_energy_hist,
     use_container_width=True
 )
-
 # ------------------------------------------
 # Grid Ramp Rate Distribution After BESS
 # ------------------------------------------
