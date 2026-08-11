@@ -287,7 +287,7 @@ for day in range(365):
     cumulative_day_energy = np.cumsum(day_bess / 60.0)
 
     # Daily maximum energy 
-    daily_max_swing.append(np.max(cumulative_day_energy))
+    daily_max_swing.append(np.max(np.abs(cumulative_day_energy)))
     daily_dates.append(
         annual_dates[start]
     )
