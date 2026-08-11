@@ -75,6 +75,31 @@ def get_annual_dates():
         freq='min'
     )
 @st.cache_data
+def calculate_no_bess_compliance(pv_data):
+
+    no_bess_compliant_minutes = 0
+    daytime_minutes = 0
+
+    for t in range(1, len(pv_data)):
+
+        # Only consider daytime operation
+        if pv_data[t] > 0.5:
+
+            daytime_minutes += 1
+
+            # Apply the 100 MW plant export limit
+            current_pv = min(pv_data[t], 100.0)
+            previous_pv = min(pv_data[t-1], 100.0)
+
+            # Natural solar ramp without BESS
+            raw_ramp = current_pv - previous_pv
+
+            # Check whether solar naturally satisfies ±3 MW/min
+            if abs(raw_ramp) <= RAMP_LIMIT_MW_PER_MIN:
+                no_bess_compliant_minutes += 1
+
+    return no_bess_compliant_minutes, daytime_minutes
+@st.cache_data
 def calculate_ideal_bess(pv_data):
 
     pv_capped = np.minimum(pv_data, 100.0)
@@ -242,6 +267,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
 pv_signal = load_data()
 annual_dates = get_annual_dates()
+no_bess_compliant_minutes, daytime_minutes = calculate_no_bess_compliance(pv_signal)
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
 export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins = run_sim(
@@ -308,17 +334,18 @@ c1.metric('Ramp Compliance (> 0.5 MW)', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} minutes')
 c3.metric('Total BESS Effort (Throughput)', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.2f}')
-c5.metric('Charging Minutes',f'{charging_minutes:,} minutes')
-c6.metric('Discharging Minutes',f'{discharging_minutes:,} minutes')
+c5.metric('Sucessful Charging Minutes',f'{charging_minutes:,} minutes')
+c6.metric('Sucessful Discharging Minutes',f'{discharging_minutes:,} minutes')
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
-c7, c8, c9, c10, c11, c12 = st.columns(6)
+c7, c8, c9, c10, c11, c12, c13 = st.columns(7)
 c7.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c8.metric('Grid Export', f'{a_export:,.0f} MWh')
 c9.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c10.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c11.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
 c12.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} minutes')
+c13.metric('Naturally Compliant Daytime Minutes', f'{no_bess_compliant_minutes:,} minutes')
 st.markdown(
     '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
