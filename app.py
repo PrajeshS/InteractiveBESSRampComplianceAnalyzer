@@ -443,8 +443,8 @@ c6, c7, c8, c9, c10 = st.columns(5)
 
 c6.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
-c8.metric('Sucessful Charging Minutes',f'{charging_minutes:,} mins')
-c9.metric('Sucessful Discharging Minutes',f'{discharging_minutes:,} mins')
+c8.metric('Successful Charging Minutes',f'{charging_minutes:,} mins')
+c9.metric('Successful Discharging Minutes',f'{discharging_minutes:,} mins')
 c10.metric('Manageable Without BESS',f'{manageable_minutes - charging_minutes - discharging_minutes:,} mins')
 
 
