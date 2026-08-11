@@ -372,7 +372,7 @@ eff_one_way
 )
 daily_net_energy = []
 daily_dates = []
-daily_energy_dates, daily_max_energy = calculate_daily_max_energy_power_only(
+daily_dates, daily_max_energy = calculate_daily_max_energy_power_only(
     pv_signal,
     pwr_cap
 )
