@@ -333,27 +333,29 @@ daily_ideal_energy = (
 )
 
 # --- UI Display ---
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric('Ramp Compliance (> 0.5 MW)', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} mins')
 c3.metric('Total BESS Effort (Throughput)', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.2f}')
-
-c5, c6, c7, c8, c9 = st.columns(5)
 c5.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} mins')
+
+c6, c7, c8, c9, c10 = st.columns(5)
+
 c6.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
 c8.metric('Sucessful Charging Minutes',f'{charging_minutes:,} mins')
 c9.metric('Sucessful Discharging Minutes',f'{discharging_minutes:,} mins')
+c10.metric('Manageable Without BESS',f'{manageable_minutes - charging_minutes - discharging_minutes:,} mins')
 
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
-c10, c11, c12, c13, c14 = st.columns(5)
-c10.metric('Solar Generation', f'{a_solar:,.0f} MWh')
-c11.metric('Grid Export', f'{a_export:,.0f} MWh')
-c12.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
-c13.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
-c14.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
+c11, c12, c13, c14, c15 = st.columns(5)
+c11.metric('Solar Generation', f'{a_solar:,.0f} MWh')
+c12.metric('Grid Export', f'{a_export:,.0f} MWh')
+c13.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
+c14.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
+c15.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
 
 
 
