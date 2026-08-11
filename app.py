@@ -339,7 +339,7 @@ c2.metric('Annual Violations', f'{v_count:,} mins')
 c3.metric('Total BESS Effort (Throughput)', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.2f}')
 
-c5, c6, c7 = st.columns(4)
+c5, c6, c7, c8, c9 = st.columns(4)
 c5.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} mins')
 c6.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
