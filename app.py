@@ -344,8 +344,8 @@ c8.metric('Grid Export', f'{a_export:,.0f} MWh')
 c9.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c10.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
 c11.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
-c12.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} minutes')
-c13.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} minutes')
+c12.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} mins')
+c13.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 st.markdown(
     '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
     unsafe_allow_html=True
