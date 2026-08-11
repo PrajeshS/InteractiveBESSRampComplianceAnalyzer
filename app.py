@@ -339,7 +339,7 @@ c2.metric('Annual Violations', f'{v_count:,} mins')
 c3.metric('Total BESS Effort (Throughput)', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.2f}')
 
-c5, c6, c7, c8, c9 = st.columns(4)
+c5, c6, c7, c8, c9 = st.columns(5)
 c5.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} mins')
 c6.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
@@ -348,7 +348,7 @@ c9.metric('Sucessful Discharging Minutes',f'{discharging_minutes:,} mins')
 
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
-c10, c11, c12, c13, c14 = st.columns(4)
+c10, c11, c12, c13, c14 = st.columns(5)
 c10.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c11.metric('Grid Export', f'{a_export:,.0f} MWh')
 c12.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
