@@ -255,7 +255,7 @@ eff_one_way
 )
 
 daily_net_energy = []
-daily_energy_swing = []
+daily_max_swing = []
 daily_dates = []
 
 for day in range(365):
@@ -286,11 +286,8 @@ for day in range(365):
     # Cumulative BESS energy movement during the day
     cumulative_day_energy = np.cumsum(day_bess / 60.0)
 
-    # Daily maximum-to-minimum energy swing
-    daily_energy_swing.append(
-        np.max(cumulative_day_energy)
-        - np.min(cumulative_day_energy)
-    )
+    # Daily maximum energy 
+    daily_max_swing.append(np.max(cumulative_day_energy))
     daily_dates.append(
         annual_dates[start]
     )
@@ -404,13 +401,13 @@ st.plotly_chart(
 # ------------------------------------------
 
 # Convert to NumPy array
-daily_energy_swing = np.array(daily_energy_swing)
+daily_max_swing = np.array(daily_max_swing)
 
 # Create 5 MWh bins
 # First bin: <=5 MWh
 # Then: >5-10, >10-15, >15-20, etc.
 
-max_energy_swing = np.max(daily_energy_swing)
+max_energy_swing = np.max(daily_max_swing)
 
 max_bin = max(
     5,
@@ -427,7 +424,7 @@ if energy_bins[-1] <= max_energy_swing:
 
 # Histogram counts
 energy_swing_counts, _ = np.histogram(
-    daily_energy_swing,
+    daily_max_swing,
     bins=energy_bins
 )
 
@@ -449,7 +446,7 @@ for i in range(len(energy_bins) - 1):
         )
 
 st.markdown(
-    '<div class="section-header">Daily BESS Energy Swing Distribution (Max - Min)</div>',
+    '<div class="section-header">Daily Maximum BESS Energy Movement Distribution</div>',
     unsafe_allow_html=True
 )
 
@@ -470,7 +467,7 @@ fig_energy_hist.update_layout(
     height=450,
     bargap=0,
     showlegend=False,
-    xaxis_title='Daily BESS Energy Swing (MWh)',
+    xaxis_title='Daily Maximum BESS Energy Movement (MWh)',
     yaxis_title='Number of Days'
 )
 
