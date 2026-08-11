@@ -619,36 +619,6 @@ st.plotly_chart(
     use_container_width=True
 )
 
-st.markdown(
-    '<div class="section-header">Daily Maximum BESS Energy Movement Distribution</div>',
-    unsafe_allow_html=True
-)
-
-fig_energy_hist = go.Figure()
-
-fig_energy_hist.add_trace(
-    go.Bar(
-        x=energy_swing_labels,
-        y=energy_swing_counts,
-        text=energy_swing_counts,
-        textposition='outside',
-        name='Number of Days'
-    )
-)
-
-fig_energy_hist.update_layout(
-    template='plotly_dark',
-    height=450,
-    bargap=0,
-    showlegend=False,
-    xaxis_title='Daily Maximum BESS Energy Movement (MWh)',
-    yaxis_title='Number of Days'
-)
-
-st.plotly_chart(
-    fig_energy_hist,
-    use_container_width=True
-)
 # ------------------------------------------
 # Grid Ramp Rate Distribution After BESS
 # ------------------------------------------
