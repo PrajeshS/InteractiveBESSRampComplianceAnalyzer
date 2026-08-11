@@ -287,7 +287,8 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
         # BESS starts at 0 MWh
         # --------------------------------------------------
         cumulative_energy = 0.0
-        max_absolute_energy = 0.0
+        max_energy = 0.0
+        min_energy = 0.0
 
         # First minute establishes the initial grid export
         previous_export = min(day_pv[0], 100.0)
@@ -343,9 +344,14 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
             cumulative_energy += actual_bess / 60.0
 
             # Track maximum absolute cumulative movement
-            max_absolute_energy = max(
-                max_absolute_energy,
-                abs(cumulative_energy)
+            max_energy = max(
+                max_energy,
+                cumulative_energy
+            )
+            
+            min_energy = min(
+                min_energy,
+                cumulative_energy
             )
 
             # --------------------------------------------------
@@ -356,7 +362,9 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
                 pv_capped - actual_bess
             )
 
-        daily_max_energy.append(max_absolute_energy)
+        daily_max_energy.append(
+            max_energy - min_energy
+        )
 
         daily_dates.append(
             annual_dates[start]
