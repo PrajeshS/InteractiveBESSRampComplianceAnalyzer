@@ -271,7 +271,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_bess_mwh += abs(actual_bess) / 60
 
         
-               # --------------------------------------------------
+             # --------------------------------------------------
         # Check final grid-export ramp after BESS action
         # --------------------------------------------------
 
@@ -279,7 +279,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
         is_violation = (
             pv > 0.1
-            and abs(final_ramp) > RAMP_LIMIT_MW_PER_MIN
+            and round(abs(final_ramp), 3) > round(RAMP_LIMIT_MW_PER_MIN, 3)
         )
 
         # --------------------------------------------------
@@ -320,18 +320,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
                 elif actual_bess < 0:
                     discharging_minutes += 1
-            # Final grid export is manageable/compliant
-            if pv > 0.1:
-                manageable_minutes += 1
-        
-                # Only count BESS operating minutes when compliant
-                if actual_bess > 0:
-                    charging_minutes += 1
-        
-                elif actual_bess < 0:
-                    discharging_minutes += 1
-
-
+         
     return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx
 @st.cache_data
 def calculate_daily_max_energy_power_only(pv_data, p_cap):
@@ -458,7 +447,7 @@ if largest_up_ramp_idx is not None:
         largest_up_ramp_idx
     ]
 else:
-    largest_net_export_up_ramp_time = None
+    largest_up_ramp_time = None
 
 
 if largest_down_ramp_idx is not None:
@@ -600,14 +589,14 @@ r8.metric(
 r9.metric(
     'Raw Solar Up Ramp Time',
     largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_up_ramp_time is not None
+    if largest_raw_solar_up_ramp_time is not None
     else 'None'
 )
 
 r10.metric(
     'Raw Solar Down Ramp Time',
-    largest_down_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_down_ramp_time is not None
+    largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_raw_solar_down_ramp_timee is not None
     else 'None'
 )
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
