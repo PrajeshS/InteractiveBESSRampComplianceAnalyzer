@@ -83,7 +83,7 @@ def calculate_no_bess_compliance(pv_data):
     for t in range(1, len(pv_data)):
 
         # Only consider daytime operation
-        if pv_data[t] > 0.5:
+        if pv_data[t] > 0.1:
 
             daytime_minutes += 1
 
@@ -184,7 +184,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
     for t in range(n):
         pv = pv_data[t]
-        if pv > 0.5: day_mins += 1
+        if pv > 0.1: day_mins += 1
         t_solar += pv / 60
 
         prev_export = (
@@ -248,7 +248,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         
         # Check final grid-export ramp after BESS action
         is_violation = (
-            pv > 0.5
+            pv > 0.1
             and round(abs(exp - prev_export), 3) > round(RAMP_LIMIT_MW_PER_MIN, 3)
         )
         
@@ -256,7 +256,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
             violations += 1
         else:
             # Final grid export is manageable/compliant
-            if pv > 0.5:
+            if pv > 0.1:
                 manageable_minutes += 1
         
                 # Only count BESS operating minutes when compliant
@@ -433,11 +433,11 @@ daily_ideal_energy = (
 
 # --- UI Display ---
 c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric('Ramp Compliance (> 0.5 MW)', f'{(d_mins-v_count)/d_mins*100:.2f}%')
+c1.metric('Ramp Compliance (> 0.1 MW)', f'{(d_mins-v_count)/d_mins*100:.2f}%')
 c2.metric('Annual Violations', f'{v_count:,} mins')
 c3.metric('Total BESS Effort (Throughput)', f'{a_bess_mwh:,.0f} MWh')
 c4.metric('Annual Equivalent Full Cycles', f'{a_bess_mwh / (2 * enr_cap * (soc_max-soc_min)):.2f}')
-c5.metric('Daytime Minutes (> 0.5 MW)', f'{day_mins:,} mins')
+c5.metric('Daytime Minutes (> 0.1 MW)', f'{day_mins:,} mins')
 
 c6, c7, c8, c9, c10 = st.columns(5)
 
@@ -638,7 +638,7 @@ st.plotly_chart(
 # ------------------------------------------
 # Only consider daytime operating periods
 grid_ramps = np.abs(np.diff(export))
-valid_mask = pv_signal[1:] > 0.5
+valid_mask = pv_signal[1:] > 0.1
 grid_ramps_active = grid_ramps[valid_mask]
 # Round ramps to 3 decimal places
 grid_ramps_active = np.round(grid_ramps_active, 3)
