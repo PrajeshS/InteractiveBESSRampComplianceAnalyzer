@@ -574,12 +574,12 @@ r4.metric(
 
 st.caption(
     f"Net export up-ramp: "
-    f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_up_ramp_time is not None else 'None'}"
+    f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_up_ramp_time is not None else 'None'}"
 )
 
 st.caption(
     f"Net export down-ramp: "
-    f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_down_ramp_time is not None else 'None'}"
+    f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_down_ramp_time is not None else 'None'}"
 )
 r5, r6, r7, r8 = st.columns(4)
 
