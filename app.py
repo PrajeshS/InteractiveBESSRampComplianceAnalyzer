@@ -184,6 +184,10 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     largest_down_ramp = np.inf
     largest_up_ramp_idx = None
     largest_down_ramp_idx = None
+    largest_raw_solar_up_ramp = -np.inf
+    largest_raw_solar_down_ramp = np.inf 
+    largest_raw_solar_up_ramp_idx = None
+    largest_raw_solar_down_ramp_idx = None
     t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh = 0, 0, 0, 0, 0
     e_min, e_max = s_min * e_cap, s_max * e_cap
 
@@ -201,6 +205,21 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         raw_pv_capped = min(pv, 100.0)
         t_curtail_inh += max(0, pv - 100.0) / 60
         raw_ramp = raw_pv_capped - prev_export
+        # --------------------------------------------------
+        # Raw solar ramp before BESS action
+        # --------------------------------------------------
+        
+        if t > 0:
+        
+            raw_solar_ramp = pv - pv_data[t-1]
+        
+            if raw_solar_ramp > largest_raw_solar_up_ramp:
+                largest_raw_solar_up_ramp = raw_solar_ramp
+                largest_raw_solar_up_ramp_idx = t
+        
+            if raw_solar_ramp < largest_raw_solar_down_ramp:
+                largest_raw_solar_down_ramp = raw_solar_ramp
+                largest_raw_solar_down_ramp_idx = t
 
         target = 0
         
@@ -313,7 +332,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                     discharging_minutes += 1
 
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx
 @st.cache_data
 def calculate_daily_max_energy_power_only(pv_data, p_cap):
 
@@ -421,7 +440,7 @@ annual_dates = get_annual_dates()
 no_bess_compliant_minutes, daytime_minutes = calculate_no_bess_compliance(pv_signal)
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx = run_sim(
 pv_signal,
 pwr_cap,
 enr_cap,
@@ -430,6 +449,40 @@ soc_max,
 init_soc_pct,
 eff_one_way
 )
+# --------------------------------------------------
+# Ramp event timestamps
+# --------------------------------------------------
+
+if largest_net_export_up_ramp_idx is not None:
+    largest_net_export_up_ramp_time = annual_dates[
+        largest_net_export_up_ramp_idx
+    ]
+else:
+    largest_net_export_up_ramp_time = None
+
+
+if largest_net_export_down_ramp_idx is not None:
+    largest_net_export_down_ramp_time = annual_dates[
+        largest_net_export_down_ramp_idx
+    ]
+else:
+    largest_net_export_down_ramp_time = None
+
+
+if largest_raw_solar_up_ramp_idx is not None:
+    largest_raw_solar_up_ramp_time = annual_dates[
+        largest_raw_solar_up_ramp_idx
+    ]
+else:
+    largest_raw_solar_up_ramp_time = None
+
+
+if largest_raw_solar_down_ramp_idx is not None:
+    largest_raw_solar_down_ramp_time = annual_dates[
+        largest_raw_solar_down_ramp_idx
+    ]
+else:
+    largest_raw_solar_down_ramp_time = None
 # --------------------------------------------------
 # Largest ramp event timestamps
 # --------------------------------------------------
@@ -504,12 +557,8 @@ c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
 c8.metric('Successful Charging Minutes',f'{charging_minutes:,} mins')
 c9.metric('Successful Discharging Minutes',f'{discharging_minutes:,} mins')
 c10.metric('Successful BESS Operational Minutes',f'{charging_minutes + discharging_minutes:,} mins')
-# --------------------------------------------------
-# Ramp Violation Summary
-# --------------------------------------------------
-
 st.markdown(
-    '<div class="section-header">Ramp Violation Summary</div>',
+    '<div class="section-header">Ramp Event Summary</div>',
     unsafe_allow_html=True
 )
 
@@ -525,36 +574,50 @@ r2.metric(
     f'{down_ramp_violations:,} mins'
 )
 
-if largest_up_ramp_time is not None:
-    r3.metric(
-        'Largest Up Ramp',
-        f'+{largest_up_ramp:.2f} MW/min'
-    )
-    st.caption(
-        f"Largest up-ramp occurred: "
-        f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M')}"
-    )
-else:
-    r3.metric(
-        'Largest Up Ramp',
-        'None'
-    )
+r3.metric(
+    'Largest Net Export Up Ramp',
+    f'+{largest_net_export_up_ramp:.2f} MW/min'
+)
 
-if largest_down_ramp_time is not None:
-    r4.metric(
-        'Largest Down Ramp',
-        f'{largest_down_ramp:.2f} MW/min'
-    )
-    st.caption(
-        f"Largest down-ramp occurred: "
-        f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M')}"
-    )
-else:
-    r4.metric(
-        'Largest Down Ramp',
-        'None'
-    )
+r4.metric(
+    'Largest Net Export Down Ramp',
+    f'{largest_net_export_down_ramp:.2f} MW/min'
+)
 
+st.caption(
+    f"Net export up-ramp: "
+    f"{largest_net_export_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_up_ramp_time is not None else 'None'}"
+)
+
+st.caption(
+    f"Net export down-ramp: "
+    f"{largest_net_export_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_down_ramp_time is not None else 'None'}"
+)
+r5, r6, r7, r8 = st.columns(4)
+
+r5.metric(
+    'Largest Raw Solar Up Ramp',
+    f'+{largest_raw_solar_up_ramp:.2f} MW/min'
+)
+
+r6.metric(
+    'Largest Raw Solar Down Ramp',
+    f'{largest_raw_solar_down_ramp:.2f} MW/min'
+)
+
+r7.metric(
+    'Raw Solar Up Ramp Time',
+    largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_raw_solar_up_ramp_time is not None
+    else 'None'
+)
+
+r8.metric(
+    'Raw Solar Down Ramp Time',
+    largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_raw_solar_down_ramp_time is not None
+    else 'None'
+)
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c11, c12, c13, c14, c15 = st.columns(5)
 c11.metric('Solar Generation', f'{a_solar:,.0f} MWh')
