@@ -453,20 +453,20 @@ eff_one_way
 # Ramp event timestamps
 # --------------------------------------------------
 
-if largest_net_export_up_ramp_idx is not None:
-    largest_net_export_up_ramp_time = annual_dates[
-        largest_net_export_up_ramp_idx
+if largest_up_ramp_idx is not None:
+    largest_up_ramp_time = annual_dates[
+        largest_up_ramp_idx
     ]
 else:
     largest_net_export_up_ramp_time = None
 
 
-if largest_net_export_down_ramp_idx is not None:
-    largest_net_export_down_ramp_time = annual_dates[
-        largest_net_export_down_ramp_idx
+if largest_down_ramp_idx is not None:
+    largest_down_ramp_time = annual_dates[
+        llargest_down_ramp_idx
     ]
 else:
-    largest_net_export_down_ramp_time = None
+    largest_down_ramp_time = None
 
 
 if largest_raw_solar_up_ramp_idx is not None:
@@ -483,19 +483,7 @@ if largest_raw_solar_down_ramp_idx is not None:
     ]
 else:
     largest_raw_solar_down_ramp_time = None
-# --------------------------------------------------
-# Largest ramp event timestamps
-# --------------------------------------------------
 
-if largest_up_ramp_idx is not None:
-    largest_up_ramp_time = annual_dates[largest_up_ramp_idx]
-else:
-    largest_up_ramp_time = None
-
-if largest_down_ramp_idx is not None:
-    largest_down_ramp_time = annual_dates[largest_down_ramp_idx]
-else:
-    largest_down_ramp_time = None
 daily_net_energy = []
 daily_dates = []
 daily_dates, daily_max_energy = calculate_daily_max_energy_power_only(
