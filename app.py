@@ -564,22 +564,22 @@ r2.metric(
 
 r3.metric(
     'Largest Net Export Up Ramp',
-    f'+{largest_net_export_up_ramp:.2f} MW/min'
+    f'+{largest_up_ramp:.2f} MW/min'
 )
 
 r4.metric(
     'Largest Net Export Down Ramp',
-    f'{largest_net_export_down_ramp:.2f} MW/min'
+    f'{largest_up_ramp_time:.2f} MW/min'
 )
 
 st.caption(
     f"Net export up-ramp: "
-    f"{largest_net_export_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_up_ramp_time is not None else 'None'}"
+    f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_up_ramp_time is not None else 'None'}"
 )
 
 st.caption(
     f"Net export down-ramp: "
-    f"{largest_net_export_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_down_ramp_time is not None else 'None'}"
+    f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_net_export_down_ramp_time is not None else 'None'}"
 )
 r5, r6, r7, r8 = st.columns(4)
 
