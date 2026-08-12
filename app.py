@@ -561,7 +561,7 @@ r2.metric(
     'Down Ramp Violations',
     f'{down_ramp_violations:,} mins'
 )
-r3, r4, r5, r6 = st columns (4)
+r3, r4, r5, r6 = st.columns (4)
 r3.metric(
     'Largest Net Export Up Ramp',
     f'+{largest_up_ramp:.2f} MW/min'
