@@ -596,7 +596,7 @@ r9.metric(
 r10.metric(
     'Raw Solar Down Ramp Time',
     largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_raw_solar_down_ramp_timee is not None
+    if largest_raw_solar_down_ramp_time is not None
     else 'None'
 )
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
