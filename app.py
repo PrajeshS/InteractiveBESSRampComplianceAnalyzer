@@ -574,15 +574,15 @@ r4.metric(
 
 r5.metric(
     'Net Export Up Ramp Time',
-    largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_raw_solar_up_ramp_time is not None
+    largest_up_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_up_ramp_time is not None
     else 'None'
 )
 
 r6.metric(
     'Net Export Down Ramp Time',
-    largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_raw_solar_down_ramp_time is not None
+    largest_down_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_down_ramp_time is not None
     else 'None'
 )
 r7, r8, r9, r10 = st.columns(4)
@@ -599,13 +599,13 @@ r8.metric(
 
 r9.metric(
     'Raw Solar Up Ramp Time',
-    largest_up_ramp_time.strftime('%Y-%m-%d %H:%M')
+    largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
     if largest_up_ramp_time is not None
     else 'None'
 )
 
 r10.metric(
-    'Net Export Down Ramp Time',
+    'Raw Solar Down Ramp Time',
     largest_down_ramp_time.strftime('%Y-%m-%d %H:%M')
     if largest_down_ramp_time is not None
     else 'None'
