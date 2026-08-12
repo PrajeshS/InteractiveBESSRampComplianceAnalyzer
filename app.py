@@ -550,7 +550,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-r1, r2, r3, r4 = st.columns(4)
+r1, r2 = st.columns(2)
 
 r1.metric(
     'Up Ramp Violations',
@@ -561,7 +561,7 @@ r2.metric(
     'Down Ramp Violations',
     f'{down_ramp_violations:,} mins'
 )
-
+r3, r4, r5, r6 = st columns (4)
 r3.metric(
     'Largest Net Export Up Ramp',
     f'+{largest_up_ramp:.2f} MW/min'
@@ -572,35 +572,35 @@ r4.metric(
     f'{largest_down_ramp:.2f} MW/min'
 )
 
-st.caption(
+r5.metric(
     f"Net export up-ramp: "
     f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_up_ramp_time is not None else 'None'}"
 )
 
-st.caption(
+r6.metric(
     f"Net export down-ramp: "
     f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_down_ramp_time is not None else 'None'}"
 )
-r5, r6, r7, r8 = st.columns(4)
+r7, r8, r9, r10 = st.columns(4)
 
-r5.metric(
+r7.metric(
     'Largest Raw Solar Up Ramp',
     f'+{largest_raw_solar_up_ramp:.2f} MW/min'
 )
 
-r6.metric(
+r8.metric(
     'Largest Raw Solar Down Ramp',
     f'{largest_raw_solar_down_ramp:.2f} MW/min'
 )
 
-r7.metric(
+r9.metric(
     'Raw Solar Up Ramp Time',
     largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
     if largest_raw_solar_up_ramp_time is not None
     else 'None'
 )
 
-r8.metric(
+r10.metric(
     'Raw Solar Down Ramp Time',
     largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
     if largest_raw_solar_down_ramp_time is not None
