@@ -178,6 +178,12 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     violations, day_mins = 0, 0
     charging_minutes, discharging_minutes = 0, 0
     manageable_minutes = 0
+    up_ramp_violations = 0
+    down_ramp_violations = 0
+    largest_up_ramp = -np.inf
+    largest_down_ramp = np.inf
+    largest_up_ramp_idx = None
+    largest_down_ramp_idx = None
     t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh = 0, 0, 0, 0, 0
     e_min, e_max = s_min * e_cap, s_max * e_cap
 
@@ -246,15 +252,55 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         t_bess_mwh += abs(actual_bess) / 60
 
         
+               # --------------------------------------------------
         # Check final grid-export ramp after BESS action
+        # --------------------------------------------------
+
+        final_ramp = exp - prev_export
+
         is_violation = (
             pv > 0.1
-            and round(abs(exp - prev_export), 3) > round(RAMP_LIMIT_MW_PER_MIN, 3)
+            and abs(final_ramp) > RAMP_LIMIT_MW_PER_MIN
         )
-        
+
+        # --------------------------------------------------
+        # Track up-ramp and down-ramp violations
+        # --------------------------------------------------
+
         if is_violation:
+
             violations += 1
+
+            # Up-ramp violation
+            if final_ramp > RAMP_LIMIT_MW_PER_MIN:
+
+                up_ramp_violations += 1
+
+                if final_ramp > largest_up_ramp:
+                    largest_up_ramp = final_ramp
+                    largest_up_ramp_idx = t
+
+            # Down-ramp violation
+            elif final_ramp < -RAMP_LIMIT_MW_PER_MIN:
+
+                down_ramp_violations += 1
+
+                if final_ramp < largest_down_ramp:
+                    largest_down_ramp = final_ramp
+                    largest_down_ramp_idx = t
+
         else:
+
+            # Final grid export is manageable/compliant
+            if pv > 0.1:
+                manageable_minutes += 1
+
+                # Only count BESS operating minutes when compliant
+                if actual_bess > 0:
+                    charging_minutes += 1
+
+                elif actual_bess < 0:
+                    discharging_minutes += 1
             # Final grid export is manageable/compliant
             if pv > 0.1:
                 manageable_minutes += 1
@@ -267,8 +313,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                     discharging_minutes += 1
 
 
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes
-
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx
 @st.cache_data
 def calculate_daily_max_energy_power_only(pv_data, p_cap):
 
@@ -376,7 +421,7 @@ annual_dates = get_annual_dates()
 no_bess_compliant_minutes, daytime_minutes = calculate_no_bess_compliance(pv_signal)
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx = run_sim(
 pv_signal,
 pwr_cap,
 enr_cap,
@@ -385,6 +430,19 @@ soc_max,
 init_soc_pct,
 eff_one_way
 )
+# --------------------------------------------------
+# Largest ramp event timestamps
+# --------------------------------------------------
+
+if largest_up_ramp_idx is not None:
+    largest_up_ramp_time = annual_dates[largest_up_ramp_idx]
+else:
+    largest_up_ramp_time = None
+
+if largest_down_ramp_idx is not None:
+    largest_down_ramp_time = annual_dates[largest_down_ramp_idx]
+else:
+    largest_down_ramp_time = None
 daily_net_energy = []
 daily_dates = []
 daily_dates, daily_max_energy = calculate_daily_max_energy_power_only(
@@ -446,7 +504,56 @@ c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
 c8.metric('Successful Charging Minutes',f'{charging_minutes:,} mins')
 c9.metric('Successful Discharging Minutes',f'{discharging_minutes:,} mins')
 c10.metric('Successful BESS Operational Minutes',f'{charging_minutes + discharging_minutes:,} mins')
+# --------------------------------------------------
+# Ramp Violation Summary
+# --------------------------------------------------
 
+st.markdown(
+    '<div class="section-header">Ramp Violation Summary</div>',
+    unsafe_allow_html=True
+)
+
+r1, r2, r3, r4 = st.columns(4)
+
+r1.metric(
+    'Up Ramp Violations',
+    f'{up_ramp_violations:,} mins'
+)
+
+r2.metric(
+    'Down Ramp Violations',
+    f'{down_ramp_violations:,} mins'
+)
+
+if largest_up_ramp_time is not None:
+    r3.metric(
+        'Largest Up Ramp',
+        f'+{largest_up_ramp:.2f} MW/min'
+    )
+    st.caption(
+        f"Largest up-ramp occurred: "
+        f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M')}"
+    )
+else:
+    r3.metric(
+        'Largest Up Ramp',
+        'None'
+    )
+
+if largest_down_ramp_time is not None:
+    r4.metric(
+        'Largest Down Ramp',
+        f'{largest_down_ramp:.2f} MW/min'
+    )
+    st.caption(
+        f"Largest down-ramp occurred: "
+        f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M')}"
+    )
+else:
+    r4.metric(
+        'Largest Down Ramp',
+        'None'
+    )
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c11, c12, c13, c14, c15 = st.columns(5)
