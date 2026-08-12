@@ -463,7 +463,7 @@ else:
 
 if largest_down_ramp_idx is not None:
     largest_down_ramp_time = annual_dates[
-        llargest_down_ramp_idx
+        largest_down_ramp_idx
     ]
 else:
     largest_down_ramp_time = None
