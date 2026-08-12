@@ -569,7 +569,7 @@ r3.metric(
 
 r4.metric(
     'Largest Net Export Down Ramp',
-    f'{largest_up_ramp_time:.2f} MW/min'
+    f'{largest_down_ramp:.2f} MW/min'
 )
 
 st.caption(
