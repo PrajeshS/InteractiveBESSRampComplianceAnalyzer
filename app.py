@@ -573,13 +573,17 @@ r4.metric(
 )
 
 r5.metric(
-    f"Net export up-ramp: "
-    f"{largest_up_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_up_ramp_time is not None else 'None'}"
+    'Net Export Up Ramp Time',
+    largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_raw_solar_up_ramp_time is not None
+    else 'None'
 )
 
 r6.metric(
-    f"Net export down-ramp: "
-    f"{largest_down_ramp_time.strftime('%Y-%m-%d %H:%M') if largest_down_ramp_time is not None else 'None'}"
+    'Net Export Down Ramp Time',
+    largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_raw_solar_down_ramp_time is not None
+    else 'None'
 )
 r7, r8, r9, r10 = st.columns(4)
 
@@ -595,15 +599,15 @@ r8.metric(
 
 r9.metric(
     'Raw Solar Up Ramp Time',
-    largest_raw_solar_up_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_raw_solar_up_ramp_time is not None
+    largest_up_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_up_ramp_time is not None
     else 'None'
 )
 
 r10.metric(
-    'Raw Solar Down Ramp Time',
-    largest_raw_solar_down_ramp_time.strftime('%Y-%m-%d %H:%M')
-    if largest_raw_solar_down_ramp_time is not None
+    'Net Export Down Ramp Time',
+    largest_down_ramp_time.strftime('%Y-%m-%d %H:%M')
+    if largest_down_ramp_time is not None
     else 'None'
 )
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
