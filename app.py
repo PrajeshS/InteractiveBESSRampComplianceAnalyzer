@@ -533,6 +533,14 @@ c6.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
 c8.metric('Successful Charging Minutes',f'{charging_minutes:,} mins')
 c9.metric('Successful Discharging Minutes',f'{discharging_minutes:,} mins')
+
+st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
+c11, c12, c13, c14, c15 = st.columns(5)
+c11.metric('Solar Generation', f'{a_solar:,.0f} MWh')
+c12.metric('Grid Export', f'{a_export:,.0f} MWh')
+c13.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
+c14.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
+c15.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
 c10.metric('Successful BESS Operational Minutes',f'{charging_minutes + discharging_minutes:,} mins')
 st.markdown(
     '<div class="section-header">Ramp Event Summary</div>',
@@ -599,15 +607,6 @@ r10.metric(
     if largest_raw_solar_down_ramp_time is not None
     else 'None'
 )
-st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
-c11, c12, c13, c14, c15 = st.columns(5)
-c11.metric('Solar Generation', f'{a_solar:,.0f} MWh')
-c12.metric('Grid Export', f'{a_export:,.0f} MWh')
-c13.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
-c14.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
-c15.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
-
-
 
 st.markdown(
     '<div class="section-header">Daily Ideal BESS Net Energy Required for ±3 MW/min Ramp Compliance</div>',
