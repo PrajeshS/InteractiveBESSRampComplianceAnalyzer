@@ -194,6 +194,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
 
     for t in range(n):
         pv = pv_data[t]
+        inverter_up_ramp_curtailment = 0.0
         if pv > 0.1: day_mins += 1
         t_solar += pv / 60
 
@@ -231,42 +232,35 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         
         actual_bess = 0
         
-        if target > 0:  # charge
-
+       if target > 0:  # charge
+        
+            # --------------------------------------------------
+            # Inverter curtailment caused specifically by the
+            # BESS power rating being insufficient
+            # --------------------------------------------------
+            inverter_up_ramp_curtailment = max(
+                0.0,
+                target - p_cap
+            )
+        
+            # Accumulate inverter-curtailed energy in MWh
+            t_inverter_up_ramp_curtailment += (
+                inverter_up_ramp_curtailment / 60.0
+            )
+        
+            # --------------------------------------------------
+            # BESS charging limits
+            # --------------------------------------------------
             available_pwr = (
                 (e_max - curr_energy) * 60
             ) / eff
         
-            # --------------------------------------------------
-            # BESS charging limited by:
-            #   1. Required ramp-control power
-            #   2. BESS power rating
-            #   3. Available energy capacity
-            # --------------------------------------------------
             actual_bess = min(
                 target,
                 p_cap,
                 available_pwr
             )
         
-            # --------------------------------------------------
-            # Inverter curtailment required when BESS cannot
-            # absorb the entire power needed to maintain +3 MW/min
-            #
-            # This is specifically the amount above the BESS
-            # power rating.
-            # --------------------------------------------------
-            inverter_up_ramp_curtailment = max(
-                0.0,
-                target - actual_bess
-            )
-        
-            # Energy curtailed during this one-minute interval
-            t_inverter_up_ramp_curtailment += (
-                inverter_up_ramp_curtailment / 60.0
-            )
-        
-            # Update BESS SOC
             curr_energy += (
                 actual_bess * eff
             ) / 60
