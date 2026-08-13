@@ -232,7 +232,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         
         actual_bess = 0
         
-       if target > 0:  # charge
+        if target > 0:  # charge
         
             # --------------------------------------------------
             # Inverter curtailment caused specifically by the
