@@ -195,6 +195,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     for t in range(n):
         pv = pv_data[t]
         inverter_up_ramp_curtailment = 0.0
+        ramp_curtailment = 0.0
         if pv > 0.1: day_mins += 1
         t_solar += pv / 60
 
@@ -233,24 +234,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         actual_bess = 0
         
         if target > 0:  # charge
-        
-            # --------------------------------------------------
-            # Inverter curtailment caused specifically by the
-            # BESS power rating being insufficient
-            # --------------------------------------------------
-            inverter_up_ramp_curtailment = max(
-                0.0,
-                target - p_cap
-            )
-        
-            # Accumulate inverter-curtailed energy in MWh
-            t_inverter_up_ramp_curtailment += (
-                inverter_up_ramp_curtailment / 60.0
-            )
-        
-            # --------------------------------------------------
-            # BESS charging limits
-            # --------------------------------------------------
+
             available_pwr = (
                 (e_max - curr_energy) * 60
             ) / eff
@@ -260,6 +244,16 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 p_cap,
                 available_pwr
             )
+        
+            # --------------------------------------------------
+            # Ramp curtailment caused by insufficient BESS
+            # --------------------------------------------------
+            ramp_curtailment = max(
+                0.0,
+                target - actual_bess
+            )
+        
+            t_curtail_ramp += ramp_curtailment / 60.0
         
             curr_energy += (
                 actual_bess * eff
