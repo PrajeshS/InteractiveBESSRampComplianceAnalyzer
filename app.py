@@ -188,7 +188,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     largest_raw_solar_down_ramp = np.inf 
     largest_raw_solar_up_ramp_idx = None
     largest_raw_solar_down_ramp_idx = None
-    t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh = 0, 0, 0, 0, 0
+    t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, t_inverter_up_ramp_curtailment = 0, 0, 0, 0, 0, 0
     e_min, e_max = s_min * e_cap, s_max * e_cap
 
 
@@ -232,24 +232,44 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
         actual_bess = 0
         
         if target > 0:  # charge
-        
-            available_pwr = (
-                (e_max - curr_energy) * 60
-            ) / eff
-        
-            actual_bess = min(
-                target,
-                p_cap,
-                available_pwr
-            )
-        
-            curr_energy += (
-                actual_bess * eff
-            ) / 60
-        
-            if round(target,3) > round(actual_bess,3):
-                t_curtail_ramp += (target - actual_bess) / 60
-        
+
+    available_pwr = (
+        (e_max - curr_energy) * 60
+    ) / eff
+
+    # --------------------------------------------------
+    # BESS charging limited by:
+    #   1. Required ramp-control power
+    #   2. BESS power rating
+    #   3. Available energy capacity
+    # --------------------------------------------------
+    actual_bess = min(
+        target,
+        p_cap,
+        available_pwr
+    )
+
+    # --------------------------------------------------
+    # Inverter curtailment required when BESS cannot
+    # absorb the entire power needed to maintain +3 MW/min
+    #
+    # This is specifically the amount above the BESS
+    # power rating.
+    # --------------------------------------------------
+    inverter_up_ramp_curtailment = max(
+        0.0,
+        target - actual_bess
+    )
+
+    # Energy curtailed during this one-minute interval
+    t_inverter_up_ramp_curtailment += (
+        inverter_up_ramp_curtailment / 60.0
+    )
+
+    # Update BESS SOC
+    curr_energy += (
+        actual_bess * eff
+    ) / 60
         elif target < 0:  # discharge
         
             available_pwr = (
@@ -265,7 +285,11 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 actual_bess / eff
             ) / 60
         
-        exp = raw_pv_capped - actual_bess
+        exp = (
+            raw_pv_capped
+            - actual_bess
+            - inverter_up_ramp_curtailment
+        )
         grid_export[t], bess_pwr[t], soc_history[t] = exp, actual_bess, (curr_energy / e_cap) * 100
         t_export += exp / 60
         t_bess_mwh += abs(actual_bess) / 60
@@ -321,7 +345,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 elif actual_bess < 0:
                     discharging_minutes += 1
          
-    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx
+    return grid_export, bess_pwr, soc_history, violations, day_mins, t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_inverter_up_ramp_curtailment, t_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx
 @st.cache_data
 def calculate_daily_max_energy_power_only(pv_data, p_cap):
 
@@ -429,7 +453,7 @@ annual_dates = get_annual_dates()
 no_bess_compliant_minutes, daytime_minutes = calculate_no_bess_compliance(pv_signal)
 ideal_export, ideal_bess = calculate_ideal_bess(pv_signal)
 required_energy_dates, required_initial_energy = (calculate_required_initial_energy(pv_signal, pwr_cap))
-export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx = run_sim(
+export, bess, soc, v_count, d_mins, a_solar, a_export, a_curt_inh, a_curt_ramp, a_inverter_up_ramp_curtailment, a_bess_mwh, charging_minutes, discharging_minutes, day_mins, manageable_minutes, up_ramp_violations, down_ramp_violations, largest_up_ramp, largest_down_ramp, largest_up_ramp_idx, largest_down_ramp_idx, largest_raw_solar_up_ramp, largest_raw_solar_down_ramp, largest_raw_solar_up_ramp_idx, largest_raw_solar_down_ramp_idx = run_sim(
 pv_signal,
 pwr_cap,
 enr_cap,
@@ -533,6 +557,7 @@ c6.metric('Naturally Compliant Minutes', f'{no_bess_compliant_minutes:,} mins')
 c7.metric('Manageable Daytime Minutes',f'{manageable_minutes:,} mins')
 c8.metric('Successful Charging Minutes',f'{charging_minutes:,} mins')
 c9.metric('Successful Discharging Minutes',f'{discharging_minutes:,} mins')
+c10.metric('Successful BESS Operational Minutes',f'{charging_minutes + discharging_minutes:,} mins')
 
 st.markdown('<div class="section-header">Annual Energy Budget</div>', unsafe_allow_html=True)
 c11, c12, c13, c14, c15 = st.columns(5)
@@ -540,8 +565,8 @@ c11.metric('Solar Generation', f'{a_solar:,.0f} MWh')
 c12.metric('Grid Export', f'{a_export:,.0f} MWh')
 c13.metric('Inherent Curtailment', f'{a_curt_inh:,.0f} MWh')
 c14.metric('Ramp Curtailment', f'{a_curt_ramp:,.0f} MWh')
-c15.metric('Total Curtailment', f'{((a_curt_inh + a_curt_ramp)/a_solar*100):.2f}%')
-c10.metric('Successful BESS Operational Minutes',f'{charging_minutes + discharging_minutes:,} mins')
+c15.metric('Up-Ramp Inverter Curtailment',f'{a_inverter_up_ramp_curtailment:,.0f} MWh')
+
 st.markdown(
     '<div class="section-header">Ramp Event Summary</div>',
     unsafe_allow_html=True
