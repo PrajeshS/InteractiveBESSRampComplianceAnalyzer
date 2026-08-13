@@ -245,15 +245,26 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 available_pwr
             )
         
-            # --------------------------------------------------
-            # Ramp curtailment caused by insufficient BESS
-            # --------------------------------------------------
-            ramp_curtailment = max(
+            # -----------------------------------------------
+            # EXISTING RAMP CURTAILMENT
+            # -----------------------------------------------
+            if round(target, 3) > round(actual_bess, 3):
+                t_curtail_ramp += (
+                    target - actual_bess
+                ) / 60
+        
+            # -----------------------------------------------
+            # INVERTER CURTAILMENT:
+            # portion above BESS power rating
+            # -----------------------------------------------
+            inverter_up_ramp_curtailment = max(
                 0.0,
-                target - actual_bess
+                target - p_cap
             )
         
-            t_curtail_ramp += ramp_curtailment / 60.0
+            t_inverter_up_ramp_curtailment += (
+                inverter_up_ramp_curtailment
+            ) / 60
         
             curr_energy += (
                 actual_bess * eff
