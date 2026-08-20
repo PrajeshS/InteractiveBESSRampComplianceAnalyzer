@@ -135,35 +135,95 @@ def calculate_required_initial_energy(pv_data, p_cap):
 
         export = np.zeros(len(day_pv))
         bess = np.zeros(len(day_pv))
+        inverter_curtailment = np.zeros(len(day_pv))
 
+        # Initial export
         export[0] = min(day_pv[0], 100.0)
 
         for t in range(1, len(day_pv)):
 
             pv_now = min(day_pv[t], 100.0)
 
-            target_export = np.clip(
-                pv_now,
-                export[t-1] - RAMP_LIMIT_MW_PER_MIN,
+            # --------------------------------------------------
+            # Determine the maximum export allowed by the
+            # ramp-rate limit.
+            # --------------------------------------------------
+            max_allowed_export = (
                 export[t-1] + RAMP_LIMIT_MW_PER_MIN
             )
 
+            min_allowed_export = (
+                export[t-1] - RAMP_LIMIT_MW_PER_MIN
+            )
+
+            # --------------------------------------------------
+            # Determine the export we would like to achieve
+            # before BESS/inverter action.
+            # --------------------------------------------------
+            target_export = np.clip(
+                pv_now,
+                min_allowed_export,
+                max_allowed_export
+            )
+
+            # --------------------------------------------------
+            # BESS power required to achieve the ramp-limited
+            # target export.
+            #
+            # Positive = charging
+            # Negative = discharging
+            # --------------------------------------------------
             required_bess = pv_now - target_export
 
-            required_bess = np.clip(
+            # --------------------------------------------------
+            # BESS is limited by its power rating.
+            # --------------------------------------------------
+            actual_bess = np.clip(
                 required_bess,
                 -p_cap,
                 p_cap
             )
 
-            export[t] = pv_now - required_bess
-            bess[t] = required_bess
+            # --------------------------------------------------
+            # If the required BESS charging power exceeds the
+            # BESS power rating, the inverter must curtail the
+            # remaining solar power.
+            #
+            # This is specifically UP-RAMP inverter curtailment.
+            # --------------------------------------------------
+            if required_bess > p_cap:
 
+                inverter_curtailment[t] = (
+                    required_bess - p_cap
+                )
+
+            # --------------------------------------------------
+            # Final grid export after BESS + inverter action.
+            # --------------------------------------------------
+            export[t] = (
+                pv_now
+                - actual_bess
+                - inverter_curtailment[t]
+            )
+
+            bess[t] = actual_bess
+
+        # ------------------------------------------------------
+        # Calculate the cumulative BESS energy movement.
+        # Positive = net charging
+        # Negative = net discharging
+        # ------------------------------------------------------
         cumulative_energy = np.cumsum(
             bess / 60.0
         )
 
-        required_energy.append(max(0, -np.min(cumulative_energy)))
+        # ------------------------------------------------------
+        # Required initial energy is the amount needed to ensure
+        # the BESS never goes below zero during the day.
+        # ------------------------------------------------------
+        required_energy.append(
+            max(0, -np.min(cumulative_energy))
+        )
 
         energy_dates.append(
             annual_dates[start]
