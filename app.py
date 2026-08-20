@@ -429,14 +429,17 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
             # 100 MW plant export limit
             pv_capped = min(day_pv[t], 100.0)
 
-            # Natural solar ramp relative to previous export
+            # --------------------------------------------------
+            # Natural solar ramp relative to previous GRID EXPORT
+            # --------------------------------------------------
             raw_ramp = pv_capped - previous_export
 
             # --------------------------------------------------
-            # BESS power required to maintain ±3 MW/min
+            # Determine BESS power required to maintain
+            # the ±3 MW/min grid ramp limit.
             #
-            # Positive = charging
-            # Negative = discharging
+            # Positive = BESS charging
+            # Negative = BESS discharging
             # --------------------------------------------------
             if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
 
@@ -455,7 +458,7 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
                 required_bess = 0.0
 
             # --------------------------------------------------
-            # Apply ONLY the BESS power limit
+            # Apply ONLY the BESS power rating.
             #
             # No:
             #   - energy capacity
@@ -470,27 +473,55 @@ def calculate_daily_max_energy_power_only(pv_data, p_cap):
             )
 
             # --------------------------------------------------
-            # Convert MW for one minute into MWh
+            # UP-RAMP INVERTER CURTAILMENT
+            #
+            # If the required charging power is greater than
+            # the BESS power rating, the inverter curtails
+            # the remaining power.
             # --------------------------------------------------
-            cumulative_energy += actual_bess / 60.0
+            if required_bess > p_cap:
 
-            # Track maximum absolute cumulative movement
+                inverter_up_ramp_curtailment = (
+                    required_bess - p_cap
+                )
+
+            else:
+
+                inverter_up_ramp_curtailment = 0.0
+
+            # --------------------------------------------------
+            # Convert BESS power for one minute into MWh.
+            #
+            # Inverter curtailment does NOT affect BESS energy.
+            # --------------------------------------------------
+            cumulative_energy += (
+                actual_bess / 60.0
+            )
+
+            # Track maximum and minimum cumulative
+            # BESS energy movement.
             max_energy = max(
                 max_energy,
                 cumulative_energy
             )
-            
+
             min_energy = min(
                 min_energy,
                 cumulative_energy
             )
 
             # --------------------------------------------------
-            # Resulting grid export becomes reference
-            # for the next minute
+            # Resulting grid export becomes the reference
+            # for the next minute.
+            #
+            # Export = Solar
+            #        - BESS charging/discharging
+            #        - inverter curtailment
             # --------------------------------------------------
             previous_export = (
-                pv_capped - actual_bess
+                pv_capped
+                - actual_bess
+                - inverter_up_ramp_curtailment
             )
 
         daily_max_energy.append(
