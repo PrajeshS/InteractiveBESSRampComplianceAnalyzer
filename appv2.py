@@ -26,8 +26,15 @@ pwr_cap = st.sidebar.number_input('BESS Power Limit (MW)', 0, 4000, 20)
 enr_cap = st.sidebar.number_input('BESS Energy Capacity (MWh)', 1, 8000, 40)
 init_soc_pct = st.sidebar.number_input('Initial Year SOC (%)', 0, 100, 50)
 eff_one_way = st.sidebar.number_input('One-Way Efficiency', 0.80, 1.00, 0.97, step=0.01)
-
 soc_choice = st.sidebar.selectbox('Operating SOC Window', ['0% - 100%', '10% - 90%', '20% - 80%', '30% - 70%'])
+end_of_day_soc_pct = st.sidebar.number_input('End of Day SOC (%)',min_value=0,max_value=100,value=50,step=1)
+if end_of_day_soc_pct < (soc_min * 100):
+    st.sidebar.warning(
+        f"End of Day SOC cannot be below the Operating SOC minimum "
+        f"of {soc_min * 100:.0f}%. "
+        f"The BESS will stop at {soc_min * 100:.0f}% SOC."
+    )
+scheduled_end_soc = max(end_of_day_soc_pct / 100,soc_min)
 soc_min, soc_max = [float(x.replace('%', '').strip())/100 for x in soc_choice.split('-')]
 st.sidebar.markdown('---')
 st.sidebar.header("📅 Key Reference Days")
@@ -231,7 +238,7 @@ def calculate_required_initial_energy(pv_data, p_cap):
 
     return energy_dates, required_energy
 @st.cache_data
-def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
+def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff, scheduled_end_soc):
     n = len(pv_data)
     grid_export, bess_pwr, soc_history = np.zeros(n), np.zeros(n), np.zeros(n)
     curr_energy = (start_soc_pct / 100) * e_cap
@@ -250,12 +257,21 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
     largest_raw_solar_down_ramp_idx = None
     t_solar, t_export, t_curtail_inh, t_curtail_ramp, t_bess_mwh, t_inverter_up_ramp_curtailment = 0, 0, 0, 0, 0, 0
     e_min, e_max = s_min * e_cap, s_max * e_cap
+    target_end_energy = scheduled_end_soc * e_cap
 
 
     for t in range(n):
         pv = pv_data[t]
         inverter_up_ramp_curtailment = 0.0
         ramp_curtailment = 0.0
+        # --------------------------------------------------
+        # Determine time within the current day
+        # --------------------------------------------------
+        minute_of_day = t % 1440
+
+        is_evening_discharge_period = (
+            minute_of_day >= 19 * 60
+        )
         if pv > 0.1: day_mins += 1
         t_solar += pv / 60
 
@@ -283,16 +299,47 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
                 largest_raw_solar_down_ramp = raw_solar_ramp
                 largest_raw_solar_down_ramp_idx = t
 
+        # --------------------------------------------------
+        # Determine BESS target power
+        # --------------------------------------------------
+
         target = 0
-        
-        if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
-            target = (raw_ramp - RAMP_LIMIT_MW_PER_MIN)
-        
-        elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN:
-            target = (raw_ramp + RAMP_LIMIT_MW_PER_MIN)
-        
+
+        # --------------------------------------------------
+        # Scheduled evening discharge
+        # --------------------------------------------------
+        if is_evening_discharge_period:
+
+            # Discharge until the requested End of Day SOC
+            # is reached.
+            if curr_energy > target_end_energy:
+
+                target = -p_cap
+
+            else:
+
+                target = 0
+
+        # --------------------------------------------------
+        # Normal ±3 MW/min ramp-control operation
+        # --------------------------------------------------
+        else:
+
+            if raw_ramp > RAMP_LIMIT_MW_PER_MIN:
+
+                target = (
+                    raw_ramp
+                    - RAMP_LIMIT_MW_PER_MIN
+                )
+
+            elif raw_ramp < -RAMP_LIMIT_MW_PER_MIN:
+
+                target = (
+                    raw_ramp
+                    + RAMP_LIMIT_MW_PER_MIN
+                )
+
         actual_bess = 0
-        
         if target > 0:  # charge
 
             available_pwr = (
@@ -324,17 +371,55 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff):
             ) / 60
             if round(target,3) > round(actual_bess,3):
                 t_curtail_ramp += (target - actual_bess) / 60
-        elif target < 0:  # discharge
-        
+                elif target < 0:  # discharge
+
+            # --------------------------------------------------
+            # Determine the minimum allowable stored energy.
+            #
+            # During scheduled evening discharge:
+            # stop at the End of Day SOC target.
+            #
+            # Otherwise:
+            # use the normal Operating SOC Window minimum.
+            # --------------------------------------------------
+
+            if is_evening_discharge_period:
+
+                discharge_floor = max(
+                    e_min,
+                    target_end_energy
+                )
+
+            else:
+
+                discharge_floor = e_min
+
+            # --------------------------------------------------
+            # Calculate energy available above the floor
+            # --------------------------------------------------
+
+            available_energy = (
+                curr_energy - discharge_floor
+            )
+
             available_pwr = (
-                (curr_energy - e_min) * 60
+                available_energy * 60
             ) * eff
-        
+
+            # --------------------------------------------------
+            # Actual BESS discharge
+            # --------------------------------------------------
+
             actual_bess = -min(
                 abs(target),
                 p_cap,
                 available_pwr
             )
+
+            # --------------------------------------------------
+            # Update stored energy
+            # --------------------------------------------------
+
             curr_energy += (
                 actual_bess / eff
             ) / 60
@@ -545,7 +630,8 @@ enr_cap,
 soc_min,
 soc_max,
 init_soc_pct,
-eff_one_way
+eff_one_way,
+scheduled_end_soc
 )
 # --------------------------------------------------
 # Ramp event timestamps
@@ -607,7 +693,8 @@ for day in range(365):
         soc_min,
         soc_max,
         init_soc_pct,
-        eff_one_way
+        eff_one_way,
+        scheduled_end_soc
     )
 
     daily_net_energy.append(
