@@ -371,7 +371,7 @@ def run_sim(pv_data, p_cap, e_cap, s_min, s_max, start_soc_pct, eff, scheduled_e
             ) / 60
             if round(target,3) > round(actual_bess,3):
                 t_curtail_ramp += (target - actual_bess) / 60
-                elif target < 0:  # discharge
+        elif target < 0:  # discharge
 
             # --------------------------------------------------
             # Determine the minimum allowable stored energy.
