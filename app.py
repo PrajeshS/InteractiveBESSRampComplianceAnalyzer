@@ -863,7 +863,7 @@ for i in range(len(energy_bins) - 1):
 
 st.markdown(
     '<div class="section-header">'
-    'Daily Maximum BESS Energy Movement Distribution'
+    'Daily Maximum Ideal BESS Energy Movement Distribution (Power Limited)'
     '</div>',
     unsafe_allow_html=True
 )
