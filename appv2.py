@@ -27,6 +27,7 @@ enr_cap = st.sidebar.number_input('BESS Energy Capacity (MWh)', 1, 8000, 40)
 init_soc_pct = st.sidebar.number_input('Initial Year SOC (%)', 0, 100, 50)
 eff_one_way = st.sidebar.number_input('One-Way Efficiency', 0.80, 1.00, 0.97, step=0.01)
 soc_choice = st.sidebar.selectbox('Operating SOC Window', ['0% - 100%', '10% - 90%', '20% - 80%', '30% - 70%'])
+soc_min, soc_max = [float(x.replace('%', '').strip())/100 for x in soc_choice.split('-')]
 end_of_day_soc_pct = st.sidebar.number_input('End of Day SOC (%)',min_value=0,max_value=100,value=50,step=1)
 if end_of_day_soc_pct < (soc_min * 100):
     st.sidebar.warning(
@@ -35,7 +36,7 @@ if end_of_day_soc_pct < (soc_min * 100):
         f"The BESS will stop at {soc_min * 100:.0f}% SOC."
     )
 scheduled_end_soc = max(end_of_day_soc_pct / 100,soc_min)
-soc_min, soc_max = [float(x.replace('%', '').strip())/100 for x in soc_choice.split('-')]
+
 st.sidebar.markdown('---')
 st.sidebar.header("📅 Key Reference Days")
 
